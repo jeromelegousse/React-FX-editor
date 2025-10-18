@@ -20,6 +20,21 @@
     "yOffset": {
       "type": "number"
     },
+    "lineThickness": {
+      "type": "number"
+    },
+    "softnessBase": {
+      "type": "number"
+    },
+    "softnessRange": {
+      "type": "number"
+    },
+    "amplitudeFalloff": {
+      "type": "number"
+    },
+    "bokehExponent": {
+      "type": "number"
+    },
     "col1": {
       "type": "string"
     },
