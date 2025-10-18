@@ -17,6 +17,15 @@
     "amplitude": {
       "type": "number"
     },
+    "thickness": {
+      "type": "number"
+    },
+    "softnessBase": {
+      "type": "number"
+    },
+    "amplitudeFalloff": {
+      "type": "number"
+    },
     "yOffset": {
       "type": "number"
     },
@@ -49,6 +58,9 @@
     },
     "bg2": {
       "type": "string"
+    },
+    "bgAngle": {
+      "type": "number"
     }
   },
   "supports": {
