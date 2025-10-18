@@ -5,11 +5,11 @@
   apiFetch.use( apiFetch.createNonceMiddleware( GS_ADMIN.nonce ) );
 
   const BUILTIN = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
+    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, thickness: 0.003, softnessbase: 0.2, amplitudefalloff: 0.05, yoffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
+    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, thickness: 0.003, softnessbase: 0.2, amplitudefalloff: 0.05, yoffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
+    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, thickness: 0.003, softnessbase: 0.2, amplitudefalloff: 0.05, yoffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
+    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, thickness: 0.003, softnessbase: 0.2, amplitudefalloff: 0.05, yoffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
+    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, thickness: 0.003, softnessbase: 0.2, amplitudefalloff: 0.05, yoffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
   };
 
   function ColorField({ label, value, onChange }) {
@@ -90,6 +90,9 @@
           element.createElement(RangeControl, { label:'Speed', min:0.5, max:3, step:0.01, value: cfg.speed, onChange: setField('speed') }),
           element.createElement(RangeControl, { label:'Line Count', min:1, max:32, step:1, value: cfg.linecount, onChange: setField('linecount') }),
           element.createElement(TextControl, { label:'Amplitude', value: String(cfg.amplitude), onChange: (v)=> setField('amplitude')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Thickness', value: String(cfg.thickness), onChange: (v)=> setField('thickness')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Softness Base', value: String(cfg.softnessbase), onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Amplitude Falloff', value: String(cfg.amplitudefalloff), onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')) }),
           element.createElement(TextControl, { label:'Y Offset', value: String(cfg.yoffset), onChange: (v)=> setField('yoffset')(parseFloat(v||'0')) })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px' } },
