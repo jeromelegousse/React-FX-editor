@@ -202,5 +202,24 @@
     );
   }
 
-  wp.element.render( element.createElement(App), document.getElementById('gs-admin-app') );
+  function mount(){
+    const target = document.getElementById('gs-admin-app');
+    if (!target) {
+      return;
+    }
+
+    const app = element.createElement(App);
+
+    if (typeof element.render === 'function') {
+      element.render(app, target);
+    } else if (typeof element.createRoot === 'function') {
+      element.createRoot(target).render(app);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
 })( window.wp.element, window.wp.components, window.wp.apiFetch, window.wp.i18n );
