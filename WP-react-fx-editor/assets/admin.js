@@ -32,6 +32,7 @@
     const [cfg, setCfg] = useState(Object.assign({}, BUILTIN[base]));
     const [msg, setMsg] = useState(null);
     const prevRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     useEffect(()=>{ setCfg(Object.assign({}, BUILTIN[base])); }, [base]);
 
@@ -70,6 +71,48 @@
       } catch(err){}
     }
 
+    function exportPreset(n, data){
+      try {
+        const payload = JSON.stringify({ name: n, data }, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `preset-${n}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch(err){
+        setMsg({ type: 'error', text: err.message || __('Impossible d\'exporter le preset', 'gs') });
+      }
+    }
+
+    function triggerImport(){
+      if (fileInputRef.current){
+        fileInputRef.current.click();
+      }
+    }
+
+    async function importPreset(event){
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      setMsg(null);
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== 'object' || !parsed.name || !parsed.data){
+          throw new Error(__('Fichier de preset invalide', 'gs'));
+        }
+        const res = await apiFetch({ path: 'gs/v1/presets', method: 'POST', data: { name: parsed.name, data: parsed.data } });
+        setPresets(res.presets || {});
+        setMsg({ type: 'success', text: __('Preset importé', 'gs') });
+      } catch(err){
+        setMsg({ type: 'error', text: err.message || __('Impossible d\'importer le preset', 'gs') });
+      }
+    }
+
     return element.createElement('div', { className: 'gs-grid' },
       element.createElement('div', { className: 'gs-card' },
         element.createElement('h2', null, __('Éditeur de preset', 'gs')),
@@ -105,6 +148,10 @@
       ),
       element.createElement('div', { className: 'gs-card' },
         element.createElement('h2', null, __('Mes presets', 'gs')),
+        element.createElement('input', { type: 'file', accept: 'application/json', ref: fileInputRef, style: { display: 'none' }, onChange: importPreset }),
+        element.createElement('div', { className: 'gs-actions', style: { marginBottom: '12px' } },
+          element.createElement(Button, { onClick: triggerImport }, __('Importer un preset', 'gs'))
+        ),
         Object.keys(presets).length === 0
           ? element.createElement('p', null, __('Aucun preset pour le moment.', 'gs'))
           : Object.entries(presets).map(([n, p]) =>
@@ -112,6 +159,7 @@
                 element.createElement('div', null, n, def===n ? ' • par défaut' : ''),
                 element.createElement('div', { className: 'gs-actions' },
                   element.createElement(Button, { onClick: ()=> { setName(n); setCfg(Object.assign({}, p)); } }, __('Charger', 'gs')),
+                  element.createElement(Button, { onClick: ()=> exportPreset(n, p) }, __('Exporter', 'gs')),
                   element.createElement(Button, { onClick: ()=> makeDefault(n) }, __('Par défaut', 'gs')),
                   element.createElement(Button, { isDestructive: true, onClick: ()=> delPreset(n) }, __('Supprimer', 'gs'))
                 )
