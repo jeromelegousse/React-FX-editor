@@ -31,6 +31,9 @@
     },
     "bg2": {
       "type": "string"
+    },
+    "bgAngle": {
+      "type": "number"
     }
   },
   "supports": {

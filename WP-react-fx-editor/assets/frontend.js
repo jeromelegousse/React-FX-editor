@@ -1,10 +1,10 @@
 (function(){
   const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
+    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033', bgAngle: 0 },
+    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3', bgAngle: 0 },
+    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541', bgAngle: 0 },
+    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11', bgAngle: 0 },
+    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222', bgAngle: 0 },
     custom:   {}
   };
 
@@ -33,6 +33,7 @@
     uniform vec3 uCol2;
     uniform vec3 uBg1;
     uniform vec3 uBg2;
+    uniform float uBgAngle;
     const float MAX_LINES = 32.0;
 
     float wave(vec2 uv, float speed, float amp, float thickness, float softness, float yOff) {
@@ -42,11 +43,17 @@
     }
 
     void main() {
-      vec2 uv = gl_FragCoord.xy / iResolution.y;
-      vec4 col = vec4(0.0, 0.0, 0.0, 1.0);
+      vec2 baseUv = gl_FragCoord.xy / iResolution.y;
+      vec2 pivot = vec2(0.5 * iResolution.x / iResolution.y, 0.5);
+      vec2 bgUv = baseUv - pivot;
+      float s = sin(uBgAngle);
+      float c = cos(uBgAngle);
+      bgUv = mat2(c, -s, s, c) * bgUv + pivot;
 
-      col.rgb = mix(uBg1, uBg2, clamp(uv.x + uv.y, 0.0, 1.0));
-      uv -= 0.5;
+      vec4 col = vec4(0.0, 0.0, 0.0, 1.0);
+      col.rgb = mix(uBg1, uBg2, clamp(bgUv.x + bgUv.y, 0.0, 1.0));
+
+      vec2 uv = baseUv - vec2(0.5, 0.5);
 
       float aaDy = iResolution.y * 0.000005;
       float denom = max(1.0, uLineCount - 1.0);
@@ -129,6 +136,7 @@
         uCol2:       this._gl.getUniformLocation(this._program, 'uCol2'),
         uBg1:        this._gl.getUniformLocation(this._program, 'uBg1'),
         uBg2:        this._gl.getUniformLocation(this._program, 'uBg2'),
+        uBgAngle:    this._gl.getUniformLocation(this._program, 'uBgAngle'),
       };
 
       this._start = performance.now();
@@ -152,19 +160,29 @@
       const presetName = (this.getAttribute('preset') || 'calm').toLowerCase();
       const user = (window.GS_CONFIG && window.GS_CONFIG.userPresets && window.GS_CONFIG.userPresets[presetName]) || null;
       const p = user || PRESETS[presetName] || PRESETS.calm;
+      const getAttr = (name)=>{
+        const direct = this.getAttribute(name);
+        if (direct != null) return direct;
+        const lower = name.toLowerCase();
+        if (lower !== name) {
+          const alt = this.getAttribute(lower);
+          if (alt != null) return alt;
+        }
+        return null;
+      };
       const pick = (name, def)=>{
-        const v = this.getAttribute(name);
+        const v = getAttr(name);
         if (v == null || v === '') return def;
         const n = parseFloat(v);
         return isNaN(n) ? def : n;
       };
       const pickInt = (name, def)=>{
-        const v = this.getAttribute(name);
+        const v = getAttr(name);
         if (v == null || v === '') return def;
         const n = parseInt(v, 10);
         return isNaN(n) ? def : n;
       };
-      const pickCol = (name, def)=> this.getAttribute(name) || def;
+      const pickCol = (name, def)=> getAttr(name) || def;
 
       return {
         speed:     pick('speed', p.speed ?? 1.0),
@@ -175,6 +193,7 @@
         col2:      pickCol('col2', p.col2 || '#ff66e0'),
         bg1:       pickCol('bg1',  p.bg1  || '#331600'),
         bg2:       pickCol('bg2',  p.bg2  || '#330033'),
+        bgAngle:  pick('bgAngle', p.bgAngle ?? 0),
       };
     }
 
@@ -204,6 +223,7 @@
       gl.uniform3f(this._u.uCol2, r2,g2,b2);
       gl.uniform3f(this._u.uBg1, rb1,gb1,bb1);
       gl.uniform3f(this._u.uBg2, rb2,gb2,bb2);
+      gl.uniform1f(this._u.uBgAngle, cfg.bgAngle * Math.PI / 180);
     }
 
     _render(now){
