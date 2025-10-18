@@ -36,6 +36,7 @@
     const [cfg, setCfg] = useState(withDefaults(BUILTIN[base]));
     const [msg, setMsg] = useState(null);
     const prevRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     useEffect(()=>{ setCfg(withDefaults(BUILTIN[base])); }, [base]);
 
@@ -74,6 +75,48 @@
       } catch(err){}
     }
 
+    function exportPreset(n, data){
+      try {
+        const payload = JSON.stringify({ name: n, data }, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `preset-${n}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch(err){
+        setMsg({ type: 'error', text: err.message || __('Impossible d\'exporter le preset', 'gs') });
+      }
+    }
+
+    function triggerImport(){
+      if (fileInputRef.current){
+        fileInputRef.current.click();
+      }
+    }
+
+    async function importPreset(event){
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      setMsg(null);
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== 'object' || !parsed.name || !parsed.data){
+          throw new Error(__('Fichier de preset invalide', 'gs'));
+        }
+        const res = await apiFetch({ path: 'gs/v1/presets', method: 'POST', data: { name: parsed.name, data: parsed.data } });
+        setPresets(res.presets || {});
+        setMsg({ type: 'success', text: __('Preset importé', 'gs') });
+      } catch(err){
+        setMsg({ type: 'error', text: err.message || __('Impossible d\'importer le preset', 'gs') });
+      }
+    }
+
     return element.createElement('div', { className: 'gs-grid' },
       element.createElement('div', { className: 'gs-card' },
         element.createElement('h2', null, __('Éditeur de preset', 'gs')),
@@ -94,6 +137,9 @@
           element.createElement(RangeControl, { label:'Speed', min:0.5, max:3, step:0.01, value: cfg.speed, onChange: setField('speed') }),
           element.createElement(RangeControl, { label:'Line Count', min:1, max:32, step:1, value: cfg.linecount, onChange: setField('linecount') }),
           element.createElement(TextControl, { label:'Amplitude', value: String(cfg.amplitude), onChange: (v)=> setField('amplitude')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Thickness', value: String(cfg.thickness), onChange: (v)=> setField('thickness')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Softness Base', value: String(cfg.softnessbase), onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Amplitude Falloff', value: String(cfg.amplitudefalloff), onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')) }),
           element.createElement(TextControl, { label:'Y Offset', value: String(cfg.yoffset), onChange: (v)=> setField('yoffset')(parseFloat(v||'0')) })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px' } },
@@ -112,6 +158,10 @@
       ),
       element.createElement('div', { className: 'gs-card' },
         element.createElement('h2', null, __('Mes presets', 'gs')),
+        element.createElement('input', { type: 'file', accept: 'application/json', ref: fileInputRef, style: { display: 'none' }, onChange: importPreset }),
+        element.createElement('div', { className: 'gs-actions', style: { marginBottom: '12px' } },
+          element.createElement(Button, { onClick: triggerImport }, __('Importer un preset', 'gs'))
+        ),
         Object.keys(presets).length === 0
           ? element.createElement('p', null, __('Aucun preset pour le moment.', 'gs'))
           : Object.entries(presets).map(([n, p]) =>

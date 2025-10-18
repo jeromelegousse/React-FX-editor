@@ -28,6 +28,9 @@
     uniform float uSpeed;
     uniform float uLineCount;
     uniform float uAmplitude;
+    uniform float uThickness;
+    uniform float uSoftnessBase;
+    uniform float uAmplitudeFalloff;
     uniform float uYOffset;
     uniform vec3 uCol1;
     uniform vec3 uCol2;
@@ -63,9 +66,9 @@
           float t = i / denom;
           vec3 lineCol = mix(uCol1, uCol2, t);
           float bokeh = pow(t, 3.0);
-          float thickness = 0.003;
-          float softness = aaDy + bokeh * 0.2;
-          float amp = max(0.0, uAmplitude - 0.05 * t);
+          float thickness = uThickness;
+          float softness = aaDy + bokeh * uSoftnessBase;
+          float amp = max(0.0, uAmplitude - uAmplitudeFalloff * t);
           float amt = max(0.0, pow(1.0 - bokeh, 2.0) * 0.9);
           col.rgb += wave(uv, uSpeed * (1.0 + t), amp, thickness, softness, uYOffset) * lineCol * amt;
         }
@@ -102,19 +105,36 @@
 
   class GradientShaderEl extends HTMLElement {
     connectedCallback(){
+      this._clearFallback();
+
+      const cfg = this._getConfig();
       this._canvas = document.createElement('canvas');
       this._canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+      this._canvas.setAttribute('aria-hidden', 'true');
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
       this.style.minHeight = this.style.minHeight || '300px';
-      this.appendChild(this._canvas);
 
-      this._gl = this._canvas.getContext('webgl') || this._canvas.getContext('experimental-webgl');
-      if (!this._gl) { console.error('WebGL not supported'); return; }
+      const gl = this._canvas.getContext('webgl') || this._canvas.getContext('experimental-webgl');
+      if (!gl) {
+        this._gl = null;
+        this._canvas = null;
+        this._applyFallbackGradient(cfg);
+        return;
+      }
+
+      this.appendChild(this._canvas);
+      this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
-      if (!this._program) return;
+      if (!this._program) {
+        this.removeChild(this._canvas);
+        this._canvas = null;
+        this._gl = null;
+        this._applyFallbackGradient(cfg);
+        return;
+      }
       this._gl.useProgram(this._program);
 
       const buf = this._gl.createBuffer();
@@ -131,6 +151,9 @@
         uSpeed:      this._gl.getUniformLocation(this._program, 'uSpeed'),
         uLineCount:  this._gl.getUniformLocation(this._program, 'uLineCount'),
         uAmplitude:  this._gl.getUniformLocation(this._program, 'uAmplitude'),
+        uThickness:  this._gl.getUniformLocation(this._program, 'uThickness'),
+        uSoftnessBase: this._gl.getUniformLocation(this._program, 'uSoftnessBase'),
+        uAmplitudeFalloff: this._gl.getUniformLocation(this._program, 'uAmplitudeFalloff'),
         uYOffset:    this._gl.getUniformLocation(this._program, 'uYOffset'),
         uCol1:       this._gl.getUniformLocation(this._program, 'uCol1'),
         uCol2:       this._gl.getUniformLocation(this._program, 'uCol2'),
@@ -151,9 +174,64 @@
     }
 
     disconnectedCallback(){
-      window.removeEventListener('resize', this._resize);
+      if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
+    }
+
+    _clearFallback(){
+      if (this._fallbackLayer && this.contains(this._fallbackLayer)) {
+        this.removeChild(this._fallbackLayer);
+      }
+      if (this._fallbackMessage && this.contains(this._fallbackMessage)) {
+        this.removeChild(this._fallbackMessage);
+      }
+      this._fallbackLayer = null;
+      this._fallbackMessage = null;
+      this._fallbackActive = false;
+      if (this.style) {
+        this.style.background = '';
+        this.style.backgroundImage = '';
+        this.style.removeProperty('background-blend-mode');
+      }
+      if (this.dataset && this.dataset.gsFallback) {
+        delete this.dataset.gsFallback;
+      }
+    }
+
+    _applyFallbackGradient(cfg){
+      this.style.position = 'relative';
+      this.style.display = 'block';
+      this.style.width = this.style.width || '100%';
+      this.style.minHeight = this.style.minHeight || '300px';
+
+      const baseGradient = `linear-gradient(135deg, ${cfg.bg1}, ${cfg.bg2})`;
+      const accentStep = Math.max(1, 100 / Math.max(1, cfg.linecount));
+      const accentHalf = accentStep / 2;
+      const pct = (value)=> `${Number(value.toFixed(3))}%`;
+      const accentGradient = `repeating-linear-gradient(90deg, ${cfg.col1} 0%, ${cfg.col1} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentStep)})`;
+
+      this.style.background = cfg.bg1;
+      this.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
+      this.style.backgroundBlendMode = 'screen';
+      this.dataset.gsFallback = 'true';
+      this._fallbackActive = true;
+
+      const layer = document.createElement('div');
+      layer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:inherit;mix-blend-mode:screen;opacity:0.6;pointer-events:none;background-repeat:no-repeat;background-size:cover';
+      layer.setAttribute('aria-hidden', 'true');
+      layer.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
+      this.appendChild(layer);
+      this._fallbackLayer = layer;
+
+      const message = document.createElement('span');
+      message.dataset.gsFallbackMessage = 'true';
+      message.setAttribute('role', 'status');
+      message.setAttribute('aria-live', 'polite');
+      message.textContent = this.getAttribute('fallback-text') || 'Interactive gradient disabled: WebGL unavailable.';
+      message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
+      this.appendChild(message);
+      this._fallbackMessage = message;
     }
 
     _getConfig(){
@@ -188,6 +266,9 @@
         speed:     pick('speed', p.speed ?? 1.0),
         linecount: clamp(pickInt('linecount', p.linecount ?? 10), 1, 32),
         amplitude: pick('amplitude', p.amplitude ?? 0.15),
+        thickness: pick('thickness', p.thickness ?? 0.003),
+        softnessbase: pick('softnessbase', p.softnessbase ?? 0.2),
+        amplitudefalloff: pick('amplitudefalloff', p.amplitudefalloff ?? 0.05),
         yoffset:   pick('yoffset', p.yoffset ?? 0.15),
         col1:      pickCol('col1', p.col1 || '#3a80ff'),
         col2:      pickCol('col2', p.col2 || '#ff66e0'),
@@ -214,6 +295,9 @@
       gl.uniform1f(this._u.uSpeed, cfg.speed);
       gl.uniform1f(this._u.uLineCount, cfg.linecount);
       gl.uniform1f(this._u.uAmplitude, cfg.amplitude);
+      gl.uniform1f(this._u.uThickness, cfg.thickness);
+      gl.uniform1f(this._u.uSoftnessBase, cfg.softnessbase);
+      gl.uniform1f(this._u.uAmplitudeFalloff, cfg.amplitudefalloff);
       gl.uniform1f(this._u.uYOffset, cfg.yoffset);
       const [r1,g1,b1] = hexToRgbf(cfg.col1);
       const [r2,g2,b2] = hexToRgbf(cfg.col2);

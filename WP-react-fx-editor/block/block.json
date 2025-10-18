@@ -17,6 +17,15 @@
     "amplitude": {
       "type": "number"
     },
+    "thickness": {
+      "type": "number"
+    },
+    "softnessBase": {
+      "type": "number"
+    },
+    "amplitudeFalloff": {
+      "type": "number"
+    },
     "yOffset": {
       "type": "number"
     },

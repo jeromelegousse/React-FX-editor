@@ -46,6 +46,9 @@
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
+        thickness!=null ? { thickness: String(thickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
         col1 ? { col1 } : {},
         col2 ? { col2 } : {},
@@ -93,6 +96,21 @@
                 onChange: (v)=> setAttributes({ amplitude: v === '' ? undefined : parseFloat(v) })
               }),
               wp.element.createElement(TextControl, {
+                label: __('Thickness', 'gs'),
+                value: thickness ?? '',
+                onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
+                label: __('Softness Base', 'gs'),
+                value: softnessBase ?? '',
+                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
+                label: __('Amplitude Falloff', 'gs'),
+                value: amplitudeFalloff ?? '',
+                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
                 onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) })
@@ -127,6 +145,9 @@
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
+        thickness!=null ? { thickness: String(thickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
         col1 ? { col1 } : {},
         col2 ? { col2 } : {},
