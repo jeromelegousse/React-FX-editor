@@ -95,19 +95,36 @@
 
   class GradientShaderEl extends HTMLElement {
     connectedCallback(){
+      this._clearFallback();
+
+      const cfg = this._getConfig();
       this._canvas = document.createElement('canvas');
       this._canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+      this._canvas.setAttribute('aria-hidden', 'true');
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
       this.style.minHeight = this.style.minHeight || '300px';
-      this.appendChild(this._canvas);
 
-      this._gl = this._canvas.getContext('webgl') || this._canvas.getContext('experimental-webgl');
-      if (!this._gl) { console.error('WebGL not supported'); return; }
+      const gl = this._canvas.getContext('webgl') || this._canvas.getContext('experimental-webgl');
+      if (!gl) {
+        this._gl = null;
+        this._canvas = null;
+        this._applyFallbackGradient(cfg);
+        return;
+      }
+
+      this.appendChild(this._canvas);
+      this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
-      if (!this._program) return;
+      if (!this._program) {
+        this.removeChild(this._canvas);
+        this._canvas = null;
+        this._gl = null;
+        this._applyFallbackGradient(cfg);
+        return;
+      }
       this._gl.useProgram(this._program);
 
       const buf = this._gl.createBuffer();
@@ -143,9 +160,64 @@
     }
 
     disconnectedCallback(){
-      window.removeEventListener('resize', this._resize);
+      if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
+    }
+
+    _clearFallback(){
+      if (this._fallbackLayer && this.contains(this._fallbackLayer)) {
+        this.removeChild(this._fallbackLayer);
+      }
+      if (this._fallbackMessage && this.contains(this._fallbackMessage)) {
+        this.removeChild(this._fallbackMessage);
+      }
+      this._fallbackLayer = null;
+      this._fallbackMessage = null;
+      this._fallbackActive = false;
+      if (this.style) {
+        this.style.background = '';
+        this.style.backgroundImage = '';
+        this.style.removeProperty('background-blend-mode');
+      }
+      if (this.dataset && this.dataset.gsFallback) {
+        delete this.dataset.gsFallback;
+      }
+    }
+
+    _applyFallbackGradient(cfg){
+      this.style.position = 'relative';
+      this.style.display = 'block';
+      this.style.width = this.style.width || '100%';
+      this.style.minHeight = this.style.minHeight || '300px';
+
+      const baseGradient = `linear-gradient(135deg, ${cfg.bg1}, ${cfg.bg2})`;
+      const accentStep = Math.max(1, 100 / Math.max(1, cfg.linecount));
+      const accentHalf = accentStep / 2;
+      const pct = (value)=> `${Number(value.toFixed(3))}%`;
+      const accentGradient = `repeating-linear-gradient(90deg, ${cfg.col1} 0%, ${cfg.col1} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentStep)})`;
+
+      this.style.background = cfg.bg1;
+      this.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
+      this.style.backgroundBlendMode = 'screen';
+      this.dataset.gsFallback = 'true';
+      this._fallbackActive = true;
+
+      const layer = document.createElement('div');
+      layer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:inherit;mix-blend-mode:screen;opacity:0.6;pointer-events:none;background-repeat:no-repeat;background-size:cover';
+      layer.setAttribute('aria-hidden', 'true');
+      layer.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
+      this.appendChild(layer);
+      this._fallbackLayer = layer;
+
+      const message = document.createElement('span');
+      message.dataset.gsFallbackMessage = 'true';
+      message.setAttribute('role', 'status');
+      message.setAttribute('aria-live', 'polite');
+      message.textContent = this.getAttribute('fallback-text') || 'Interactive gradient disabled: WebGL unavailable.';
+      message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
+      this.appendChild(message);
+      this._fallbackMessage = message;
     }
 
     _getConfig(){
