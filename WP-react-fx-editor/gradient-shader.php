@@ -35,6 +35,12 @@ add_action('init', function () {
       'linecount' => '',
       'amplitude' => '',
       'yoffset' => '',
+      'linethickness' => '',
+      'softnessbase' => '',
+      'softnessrange' => '',
+      'amplitudefalloff' => '',
+      'bokehexponent' => '',
+      'bgangle' => '',
       'col1' => '',
       'col2' => '',
       'bg1' => '',
@@ -44,7 +50,7 @@ add_action('init', function () {
     if ($a['preset'] === '') { $a['preset'] = gs_get_default_preset(); }
 
     $attrs = ['preset' => esc_attr($a['preset'])];
-    foreach (['speed','linecount','amplitude','yoffset','col1','col2','bg1','bg2'] as $k) {
+    foreach (['speed','linecount','amplitude','yoffset','linethickness','softnessbase','softnessrange','amplitudefalloff','bokehexponent','bgangle','col1','col2','bg1','bg2'] as $k) {
       if ($a[$k] !== '') $attrs[$k] = esc_attr($a[$k]);
     }
     $attr_str = '';
@@ -95,6 +101,12 @@ add_action('rest_api_init', function () {
         'linecount' => max(1, intval($data['linecount'] ?? 10)),
         'amplitude' => floatval($data['amplitude'] ?? 0.15),
         'yoffset' => floatval($data['yoffset'] ?? 0.15),
+        'linethickness' => max(0.0001, floatval($data['linethickness'] ?? 0.003)),
+        'softnessbase' => max(0.0, floatval($data['softnessbase'] ?? 0.0)),
+        'softnessrange' => max(0.0, floatval($data['softnessrange'] ?? 0.2)),
+        'amplitudefalloff' => max(0.0, floatval($data['amplitudefalloff'] ?? 0.05)),
+        'bokehexponent' => max(0.1, floatval($data['bokehexponent'] ?? 3.0)),
+        'bgangle' => max(0.0, min(360.0, floatval($data['bgangle'] ?? 45))),
         'col1' => sanitize_hex_color($data['col1'] ?? '#3a80ff'),
         'col2' => sanitize_hex_color($data['col2'] ?? '#ff66e0'),
         'bg1' => sanitize_hex_color($data['bg1'] ?? '#331600'),

@@ -6,11 +6,11 @@
   const __ = i18n.__;
 
   const BUILTIN = {
-    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, yOffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, yOffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, yOffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, yOffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, yOffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
+    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, yOffset: 0.15, lineThickness: 0.003, softnessBase: 0.0, softnessRange: 0.2, amplitudeFalloff: 0.05, bokehExponent: 3.0, bgAngle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
+    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, yOffset: 0.12, lineThickness: 0.003, softnessBase: 0.02, softnessRange: 0.25, amplitudeFalloff: 0.045, bokehExponent: 2.6, bgAngle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
+    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, yOffset: 0.20, lineThickness: 0.0025, softnessBase: 0.01, softnessRange: 0.22, amplitudeFalloff: 0.04, bokehExponent: 3.5, bgAngle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
+    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, yOffset: 0.10, lineThickness: 0.0032, softnessBase: 0.015, softnessRange: 0.23, amplitudeFalloff: 0.05, bokehExponent: 2.8, bgAngle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
+    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, yOffset: 0.15, lineThickness: 0.0028, softnessBase: 0.005, softnessRange: 0.18, amplitudeFalloff: 0.05, bokehExponent: 3.2, bgAngle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
   };
 
   function ColorField({ label, value, onChange }) {
@@ -26,7 +26,7 @@
 
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, yOffset, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
       const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
 
       useEffect(()=>{
@@ -47,6 +47,12 @@
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
+        lineThickness!=null ? { linethickness: String(lineThickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        softnessRange!=null ? { softnessrange: String(softnessRange) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
+        bokehExponent!=null ? { bokehexponent: String(bokehExponent) } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
         col1 ? { col1 } : {},
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
@@ -95,6 +101,42 @@
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
                 onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Line Thickness', 'gs'),
+                value: lineThickness,
+                onChange: (v)=> setAttributes({ lineThickness: v }),
+                min: 0.001, max: 0.01, step: 0.0005
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Softness Base', 'gs'),
+                value: softnessBase,
+                onChange: (v)=> setAttributes({ softnessBase: v }),
+                min: 0, max: 0.1, step: 0.001
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Softness Range', 'gs'),
+                value: softnessRange,
+                onChange: (v)=> setAttributes({ softnessRange: v }),
+                min: 0, max: 0.5, step: 0.005
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Amplitude Falloff', 'gs'),
+                value: amplitudeFalloff,
+                onChange: (v)=> setAttributes({ amplitudeFalloff: v }),
+                min: 0, max: 0.2, step: 0.001
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Bokeh Exponent', 'gs'),
+                value: bokehExponent,
+                onChange: (v)=> setAttributes({ bokehExponent: v }),
+                min: 1, max: 6, step: 0.1
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Background Angle', 'gs'),
+                value: bgAngle,
+                onChange: (v)=> setAttributes({ bgAngle: v }),
+                min: 0, max: 360, step: 1
               })
             ),
             wp.element.createElement(
@@ -113,12 +155,18 @@
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, yOffset, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
       const attrs = Object.assign({ preset: preset || 'calm' },
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
+        lineThickness!=null ? { linethickness: String(lineThickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        softnessRange!=null ? { softnessrange: String(softnessRange) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
+        bokehExponent!=null ? { bokehexponent: String(bokehExponent) } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
         col1 ? { col1 } : {},
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
