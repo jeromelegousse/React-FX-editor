@@ -6,11 +6,11 @@
   const __ = i18n.__;
 
   const BUILTIN = {
-    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, thickness: 0.003, softnessBase: 0.2, amplitudeFalloff: 0.05, yOffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, thickness: 0.003, softnessBase: 0.2, amplitudeFalloff: 0.05, yOffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, thickness: 0.003, softnessBase: 0.2, amplitudeFalloff: 0.05, yOffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, thickness: 0.003, softnessBase: 0.2, amplitudeFalloff: 0.05, yOffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, thickness: 0.003, softnessBase: 0.2, amplitudeFalloff: 0.05, yOffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
+    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, yOffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033', bgAngle: 0 },
+    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, yOffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3', bgAngle: 0 },
+    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, yOffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541', bgAngle: 0 },
+    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, yOffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11', bgAngle: 0 },
+    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, yOffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222', bgAngle: 0 }
   };
 
   function ColorField({ label, value, onChange }) {
@@ -26,7 +26,7 @@
 
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, softnessBase, amplitudeFalloff, yOffset, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, yOffset, col1, col2, bg1, bg2, bgAngle } = attributes;
       const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
 
       useEffect(()=>{
@@ -54,6 +54,7 @@
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
         bg2 ? { bg2 } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
       );
 
       return (
@@ -113,6 +114,14 @@
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
                 onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(RangeControl, {
+                label: __('Background angle', 'gs'),
+                value: bgAngle ?? 0,
+                onChange: (v)=> setAttributes({ bgAngle: v }),
+                min: 0,
+                max: 360,
+                step: 1
               })
             ),
             wp.element.createElement(
@@ -131,7 +140,7 @@
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, softnessBase, amplitudeFalloff, yOffset, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, yOffset, col1, col2, bg1, bg2, bgAngle } = attributes;
       const attrs = Object.assign({ preset: preset || 'calm' },
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
@@ -144,6 +153,7 @@
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
         bg2 ? { bg2 } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
       );
       return wp.element.createElement('div', { style: { minHeight: '300px' } },
         wp.element.createElement('gradient-shader', Object.assign({ style: 'width:100%;height:100%;display:block' }, attrs))
