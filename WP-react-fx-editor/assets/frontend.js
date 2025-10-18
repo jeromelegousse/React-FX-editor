@@ -1,10 +1,10 @@
 (function(){
   const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
+    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, bgangle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
+    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, bgangle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
+    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, bgangle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
+    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, bgangle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
+    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, bgangle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
     custom:   {}
   };
 
@@ -37,6 +37,7 @@
     uniform float uSoftnessRange;
     uniform float uAmplitudeFalloff;
     uniform float uBokehExponent;
+    uniform float uBgAngle;
     uniform vec3 uCol1;
     uniform vec3 uCol2;
     uniform vec3 uBg1;
@@ -51,17 +52,19 @@
     }
 
     void main() {
-      vec2 baseUv = gl_FragCoord.xy / iResolution.y;
-      vec2 pivot = vec2(0.5 * iResolution.x / iResolution.y, 0.5);
-      vec2 bgUv = baseUv - pivot;
-      float s = sin(uBgAngle);
-      float c = cos(uBgAngle);
-      bgUv = mat2(c, -s, s, c) * bgUv + pivot;
-
+      vec2 uv = gl_FragCoord.xy / iResolution.y;
+      vec2 bgUv = gl_FragCoord.xy / iResolution.xy;
       vec4 col = vec4(0.0, 0.0, 0.0, 1.0);
       col.rgb = mix(uBg1, uBg2, clamp(bgUv.x + bgUv.y, 0.0, 1.0));
 
-      vec2 uv = baseUv - vec2(0.5, 0.5);
+      vec2 centered = bgUv - 0.5;
+      float angle = radians(uBgAngle);
+      float s = sin(angle);
+      float c = cos(angle);
+      vec2 rotated = vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c);
+      float bgMix = clamp(rotated.x + 0.5, 0.0, 1.0);
+      col.rgb = mix(uBg1, uBg2, bgMix);
+      uv -= 0.5;
 
       float aaDy = iResolution.y * 0.000005;
       float denom = max(1.0, uLineCount - 1.0);
@@ -165,6 +168,7 @@
         uSoftnessRange: this._gl.getUniformLocation(this._program, 'uSoftnessRange'),
         uAmplitudeFalloff: this._gl.getUniformLocation(this._program, 'uAmplitudeFalloff'),
         uBokehExponent: this._gl.getUniformLocation(this._program, 'uBokehExponent'),
+        uBgAngle: this._gl.getUniformLocation(this._program, 'uBgAngle'),
         uCol1:       this._gl.getUniformLocation(this._program, 'uCol1'),
         uCol2:       this._gl.getUniformLocation(this._program, 'uCol2'),
         uBg1:        this._gl.getUniformLocation(this._program, 'uBg1'),
@@ -285,6 +289,7 @@
         softnessrange: pick('softnessrange', p.softnessrange ?? 0.2),
         amplitudefalloff: pick('amplitudefalloff', p.amplitudefalloff ?? 0.05),
         bokehexponent: pick('bokehexponent', p.bokehexponent ?? 3.0),
+        bgangle: pick('bgangle', p.bgangle ?? 45),
         col1:      pickCol('col1', p.col1 || '#3a80ff'),
         col2:      pickCol('col2', p.col2 || '#ff66e0'),
         bg1:       pickCol('bg1',  p.bg1  || '#331600'),
@@ -319,6 +324,7 @@
       gl.uniform1f(this._u.uSoftnessRange, cfg.softnessrange);
       gl.uniform1f(this._u.uAmplitudeFalloff, cfg.amplitudefalloff);
       gl.uniform1f(this._u.uBokehExponent, cfg.bokehexponent);
+      gl.uniform1f(this._u.uBgAngle, cfg.bgangle);
       const [r1,g1,b1] = hexToRgbf(cfg.col1);
       const [r2,g2,b2] = hexToRgbf(cfg.col2);
       const [rb1,gb1,bb1] = hexToRgbf(cfg.bg1);

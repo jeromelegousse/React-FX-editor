@@ -44,6 +44,9 @@
     "bokehExponent": {
       "type": "number"
     },
+    "bgAngle": {
+      "type": "number"
+    },
     "col1": {
       "type": "string"
     },
