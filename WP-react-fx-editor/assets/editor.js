@@ -46,6 +46,9 @@
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
+        thickness!=null ? { thickness: String(thickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
         lineThickness!=null ? { linethickness: String(lineThickness) } : {},
         softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
@@ -56,6 +59,7 @@
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
         bg2 ? { bg2 } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
       );
 
       return (
@@ -95,6 +99,21 @@
                 label: __('Amplitude', 'gs'),
                 value: amplitude ?? '',
                 onChange: (v)=> setAttributes({ amplitude: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
+                label: __('Thickness', 'gs'),
+                value: thickness ?? '',
+                onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
+                label: __('Softness Base', 'gs'),
+                value: softnessBase ?? '',
+                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) })
+              }),
+              wp.element.createElement(TextControl, {
+                label: __('Amplitude Falloff', 'gs'),
+                value: amplitudeFalloff ?? '',
+                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) })
               }),
               wp.element.createElement(TextControl, {
                 label: __('Y Offset', 'gs'),
@@ -153,6 +172,9 @@
         speed!=null ? { speed: String(speed) } : {},
         lineCount!=null ? { linecount: String(lineCount) } : {},
         amplitude!=null ? { amplitude: String(amplitude) } : {},
+        thickness!=null ? { thickness: String(thickness) } : {},
+        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
+        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
         yOffset!=null ? { yoffset: String(yOffset) } : {},
         lineThickness!=null ? { linethickness: String(lineThickness) } : {},
         softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
@@ -163,6 +185,7 @@
         col2 ? { col2 } : {},
         bg1 ? { bg1 } : {},
         bg2 ? { bg2 } : {},
+        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
       );
       return wp.element.createElement('div', { style: { minHeight: '300px' } },
         wp.element.createElement('gradient-shader', Object.assign({ style: 'width:100%;height:100%;display:block' }, attrs))

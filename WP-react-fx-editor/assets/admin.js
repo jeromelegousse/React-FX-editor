@@ -47,17 +47,17 @@
     const [base, setBase] = useState('calm');
     const defaultName = __('Mon preset', 'gs');
     const [name, setName] = useState(defaultName);
-    const [cfg, setCfg] = useState(Object.assign({}, BUILTIN[base]));
+    const [cfg, setCfg] = useState(withDefaults(BUILTIN[base]));
     const [msg, setMsg] = useState(null);
     const prevRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    useEffect(()=>{ setCfg(Object.assign({}, BUILTIN[base])); }, [base]);
+    useEffect(()=>{ setCfg(withDefaults(BUILTIN[base])); }, [base]);
 
     useEffect(()=>{
       const el = prevRef.current;
       if (!el) return;
-      Object.entries(cfg).forEach(([k,v])=> el.setAttribute(k, String(v)));
+      Object.entries(cfg).forEach(([k,v])=> el.setAttribute(k.toLowerCase(), String(v)));
       el.setAttribute('preset','custom');
     }, [cfg]);
 
@@ -151,6 +151,9 @@
           element.createElement(RangeControl, { label:'Speed', min:0.5, max:3, step:0.01, value: cfg.speed, onChange: setField('speed') }),
           element.createElement(RangeControl, { label:'Line Count', min:1, max:32, step:1, value: cfg.linecount, onChange: setField('linecount') }),
           element.createElement(TextControl, { label:'Amplitude', value: String(cfg.amplitude), onChange: (v)=> setField('amplitude')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Thickness', value: String(cfg.thickness), onChange: (v)=> setField('thickness')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Softness Base', value: String(cfg.softnessbase), onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')) }),
+          element.createElement(TextControl, { label:'Amplitude Falloff', value: String(cfg.amplitudefalloff), onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')) }),
           element.createElement(TextControl, { label:'Y Offset', value: String(cfg.yoffset), onChange: (v)=> setField('yoffset')(parseFloat(v||'0')) })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px' } },
@@ -164,7 +167,10 @@
           ColorField({ label:'col1', value: cfg.col1, onChange: setField('col1') }),
           ColorField({ label:'col2', value: cfg.col2, onChange: setField('col2') }),
           ColorField({ label:'bg1', value: cfg.bg1, onChange: setField('bg1') }),
-          ColorField({ label:'bg2', value: cfg.bg2, onChange: setField('bg2') })
+          ColorField({ label:'bg2', value: cfg.bg2, onChange: setField('bg2') }),
+          element.createElement('div', { style: { gridColumn: '1 / -1' } },
+            element.createElement(RangeControl, { label:__('Background angle', 'gs'), min:0, max:360, step:1, value: cfg.bgAngle ?? 0, onChange: (v)=> setField('bgAngle')(v ?? 0) })
+          )
         ),
         element.createElement('div', { className: 'gs-actions', style: { marginTop:'12px' } },
           element.createElement(Button, { isPrimary: true, onClick: savePreset }, __('Enregistrer le preset', 'gs')),
