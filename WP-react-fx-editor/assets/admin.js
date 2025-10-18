@@ -27,8 +27,8 @@
     const [presets, setPresets] = useState(GS_ADMIN.config.userPresets || {});
     const [def, setDef] = useState(GS_ADMIN.config.default || 'calm');
     const [base, setBase] = useState('calm');
-    theName = 'Mon preset';
-    const [name, setName] = useState(theName);
+    const defaultName = __('Mon preset', 'gs');
+    const [name, setName] = useState(defaultName);
     const [cfg, setCfg] = useState(Object.assign({}, BUILTIN[base]));
     const [msg, setMsg] = useState(null);
     const prevRef = useRef(null);
