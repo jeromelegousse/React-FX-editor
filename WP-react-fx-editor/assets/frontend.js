@@ -1,10 +1,10 @@
 (function(){
   const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033', bgAngle: 0 },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3', bgAngle: 0 },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541', bgAngle: 0 },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11', bgAngle: 0 },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222', bgAngle: 0 },
+    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
+    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
+    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
+    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
+    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
     custom:   {}
   };
 
@@ -32,6 +32,11 @@
     uniform float uSoftnessBase;
     uniform float uAmplitudeFalloff;
     uniform float uYOffset;
+    uniform float uLineThickness;
+    uniform float uSoftnessBase;
+    uniform float uSoftnessRange;
+    uniform float uAmplitudeFalloff;
+    uniform float uBokehExponent;
     uniform vec3 uCol1;
     uniform vec3 uCol2;
     uniform vec3 uBg1;
@@ -65,9 +70,9 @@
         if (i <= uLineCount) {
           float t = i / denom;
           vec3 lineCol = mix(uCol1, uCol2, t);
-          float bokeh = pow(t, 3.0);
-          float thickness = uThickness;
-          float softness = aaDy + bokeh * uSoftnessBase;
+          float bokeh = pow(t, max(0.5, uBokehExponent));
+          float thickness = max(0.0001, uLineThickness);
+          float softness = aaDy + uSoftnessBase + bokeh * uSoftnessRange;
           float amp = max(0.0, uAmplitude - uAmplitudeFalloff * t);
           float amt = max(0.0, pow(1.0 - bokeh, 2.0) * 0.9);
           col.rgb += wave(uv, uSpeed * (1.0 + t), amp, thickness, softness, uYOffset) * lineCol * amt;
@@ -155,6 +160,11 @@
         uSoftnessBase: this._gl.getUniformLocation(this._program, 'uSoftnessBase'),
         uAmplitudeFalloff: this._gl.getUniformLocation(this._program, 'uAmplitudeFalloff'),
         uYOffset:    this._gl.getUniformLocation(this._program, 'uYOffset'),
+        uLineThickness: this._gl.getUniformLocation(this._program, 'uLineThickness'),
+        uSoftnessBase:  this._gl.getUniformLocation(this._program, 'uSoftnessBase'),
+        uSoftnessRange: this._gl.getUniformLocation(this._program, 'uSoftnessRange'),
+        uAmplitudeFalloff: this._gl.getUniformLocation(this._program, 'uAmplitudeFalloff'),
+        uBokehExponent: this._gl.getUniformLocation(this._program, 'uBokehExponent'),
         uCol1:       this._gl.getUniformLocation(this._program, 'uCol1'),
         uCol2:       this._gl.getUniformLocation(this._program, 'uCol2'),
         uBg1:        this._gl.getUniformLocation(this._program, 'uBg1'),
@@ -270,6 +280,11 @@
         softnessbase: pick('softnessbase', p.softnessbase ?? 0.2),
         amplitudefalloff: pick('amplitudefalloff', p.amplitudefalloff ?? 0.05),
         yoffset:   pick('yoffset', p.yoffset ?? 0.15),
+        linethickness: pick('linethickness', p.linethickness ?? 0.003),
+        softnessbase:  pick('softnessbase', p.softnessbase ?? 0.0),
+        softnessrange: pick('softnessrange', p.softnessrange ?? 0.2),
+        amplitudefalloff: pick('amplitudefalloff', p.amplitudefalloff ?? 0.05),
+        bokehexponent: pick('bokehexponent', p.bokehexponent ?? 3.0),
         col1:      pickCol('col1', p.col1 || '#3a80ff'),
         col2:      pickCol('col2', p.col2 || '#ff66e0'),
         bg1:       pickCol('bg1',  p.bg1  || '#331600'),
@@ -299,6 +314,11 @@
       gl.uniform1f(this._u.uSoftnessBase, cfg.softnessbase);
       gl.uniform1f(this._u.uAmplitudeFalloff, cfg.amplitudefalloff);
       gl.uniform1f(this._u.uYOffset, cfg.yoffset);
+      gl.uniform1f(this._u.uLineThickness, cfg.linethickness);
+      gl.uniform1f(this._u.uSoftnessBase, cfg.softnessbase);
+      gl.uniform1f(this._u.uSoftnessRange, cfg.softnessrange);
+      gl.uniform1f(this._u.uAmplitudeFalloff, cfg.amplitudefalloff);
+      gl.uniform1f(this._u.uBokehExponent, cfg.bokehexponent);
       const [r1,g1,b1] = hexToRgbf(cfg.col1);
       const [r2,g2,b2] = hexToRgbf(cfg.col2);
       const [rb1,gb1,bb1] = hexToRgbf(cfg.bg1);
