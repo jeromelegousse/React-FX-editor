@@ -1,0 +1,44 @@
+{
+  "apiVersion": 3,
+  "name": "gs/gradient-shader",
+  "title": "Gradient Shader",
+  "icon": "art",
+  "category": "design",
+  "attributes": {
+    "preset": {
+      "type": "string"
+    },
+    "speed": {
+      "type": "number"
+    },
+    "lineCount": {
+      "type": "number"
+    },
+    "amplitude": {
+      "type": "number"
+    },
+    "yOffset": {
+      "type": "number"
+    },
+    "col1": {
+      "type": "string"
+    },
+    "col2": {
+      "type": "string"
+    },
+    "bg1": {
+      "type": "string"
+    },
+    "bg2": {
+      "type": "string"
+    }
+  },
+  "supports": {
+    "align": [
+      "wide",
+      "full"
+    ]
+  },
+  "editorScript": "file:../assets/editor.js",
+  "viewScript": "file:../assets/frontend.js"
+}

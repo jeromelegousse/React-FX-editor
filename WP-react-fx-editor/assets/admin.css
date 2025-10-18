@@ -1,0 +1,7 @@
+
+#gs-admin-app { max-width: 1100px; }
+.gs-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.gs-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+.gs-preview { height: 360px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; background: #111; }
+.gs-list-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; }
+.gs-actions { display:flex; gap:8px; }
