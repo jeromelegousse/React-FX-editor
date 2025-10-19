@@ -171,7 +171,14 @@
           ColorField({ label:'bg1', value: cfg.bg1, onChange: setField('bg1') }),
           ColorField({ label:'bg2', value: cfg.bg2, onChange: setField('bg2') }),
           element.createElement('div', { style: { gridColumn: '1 / -1' } },
-            element.createElement(RangeControl, { label:__('Background angle', 'gs'), min:0, max:360, step:1, value: cfg.bgangle ?? 0, onChange: (v)=> setField('bgangle')(v ?? 0) })
+            element.createElement(RangeControl, {
+              label: __('Background angle', 'gs'),
+              min: 0,
+              max: 360,
+              step: 1,
+              value: cfg.bgangle != null ? cfg.bgangle : 0,
+              onChange: (v)=> setField('bgangle')(v == null ? 0 : v)
+            })
           )
         )
         element.createElement('div', { className: 'gs-actions', style: { marginTop:'12px' } },
