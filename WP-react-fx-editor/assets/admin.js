@@ -147,7 +147,7 @@
         }),
         element.createElement(TextControl, { label: __('Nom du preset', 'gs'), value: name, onChange: setName }),
         element.createElement('div', { className: 'gs-preview', style: { margin: '12px 0' } },
-          element.createElement('gradient-shader', { ref: prevRef, style: 'display:block;width:100%;height:100%' })
+          element.createElement('gradient-shader', { ref: prevRef, style: { display: 'block', width: '100%', height: '100%' } })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' } },
           element.createElement(RangeControl, { label:'Speed', min:0.5, max:3, step:0.01, value: cfg.speed, onChange: setField('speed') }),

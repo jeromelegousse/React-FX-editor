@@ -62,7 +62,7 @@ add_action('init', function () {
 
 // Admin menu and page
 add_action('admin_menu', function() {
-  add_menu_page('Gradient Shader','Gradient Shader','manage_options','gs-presets','gs_render_admin_page','data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+CiAgPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2E4MGZmIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjZmY2NmUwIi8+CiAgPC9saW5lYXJHcmFkaWVudD48L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iIzExMSIvPgogIDxwYXRoIGQ9Ik0wIDEyIEMzIDYsIDcgMTQsIDEwIDEwIFMxNyAxMiwgMjAgOCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+',59);
+  add_menu_page('Gradient Shader','Gradient Shader','edit_pages','gs-presets','gs_render_admin_page','data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+CiAgPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2E4MGZmIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjZmY2NmUwIi8+CiAgPC9saW5lYXJHcmFkaWVudD48L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iIzExMSIvPgogIDxwYXRoIGQ9Ik0wIDEyIEMzIDYsIDcgMTQsIDEwIDEwIFMxNyAxMiwgMjAgOCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+',59);
 });
 
 function gs_render_admin_page() {
@@ -86,12 +86,12 @@ add_action('admin_enqueue_scripts', function($hook) {
 add_action('rest_api_init', function () {
   register_rest_route('gs/v1', '/presets', [
     'methods' => 'GET',
-    'permission_callback' => function() { return current_user_can('manage_options'); },
+    'permission_callback' => function() { return current_user_can('edit_pages'); },
     'callback' => function() { return new WP_REST_Response(['default'=>gs_get_default_preset(),'userPresets'=>gs_get_user_presets()],200); }
   ]);
   register_rest_route('gs/v1', '/presets', [
     'methods' => 'POST',
-    'permission_callback' => function() { return current_user_can('manage_options'); },
+    'permission_callback' => function() { return current_user_can('edit_pages'); },
     'callback' => function(WP_REST_Request $req) {
       $name = sanitize_text_field($req->get_param('name'));
       $data = $req->get_param('data');
@@ -120,7 +120,7 @@ add_action('rest_api_init', function () {
   ]);
   register_rest_route('gs/v1', '/presets/(?P<name>[\w\- ]+)', [
     'methods' => 'DELETE',
-    'permission_callback' => function() { return current_user_can('manage_options'); },
+    'permission_callback' => function() { return current_user_can('edit_pages'); },
     'callback' => function(WP_REST_Request $req) {
       $name = sanitize_text_field($req['name']);
       $presets = gs_get_user_presets();
@@ -130,7 +130,7 @@ add_action('rest_api_init', function () {
   ]);
   register_rest_route('gs/v1', '/default', [
     'methods' => 'POST',
-    'permission_callback' => function() { return current_user_can('manage_options'); },
+    'permission_callback' => function() { return current_user_can('edit_pages'); },
     'callback' => function(WP_REST_Request $req) {
       $name = sanitize_text_field($req->get_param('name'));
       if (!$name) return new WP_Error('gs_invalid','Nom de preset requis',['status'=>400]);

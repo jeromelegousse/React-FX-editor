@@ -164,7 +164,7 @@
             )
           ),
           wp.element.createElement('div', blockProps,
-            wp.element.createElement('gradient-shader', Object.assign({ style: 'width:100%;height:100%;display:block' }, attrs))
+            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
           )
         )
       );
@@ -188,7 +188,7 @@
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
       return wp.element.createElement('div', { style: { minHeight: '300px' } },
-        wp.element.createElement('gradient-shader', Object.assign({ style: 'width:100%;height:100%;display:block' }, attrs))
+        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
       );
     }
   });
