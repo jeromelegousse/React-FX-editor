@@ -26,7 +26,7 @@
 
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
       const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
 
       useEffect(()=>{
@@ -42,26 +42,22 @@
         ...Object.keys(USER).map(k=>({ label: 'Custom: '+k, value: k }))
       ];
 
-      const attrs = Object.assign({ preset: preset || 'calm' },
-        speed!=null ? { speed: String(speed) } : {},
-        lineCount!=null ? { linecount: String(lineCount) } : {},
-        amplitude!=null ? { amplitude: String(amplitude) } : {},
-        thickness!=null ? { thickness: String(thickness) } : {},
-        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
-        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
-        yOffset!=null ? { yoffset: String(yOffset) } : {},
-        lineThickness!=null ? { linethickness: String(lineThickness) } : {},
-        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
-        softnessRange!=null ? { softnessrange: String(softnessRange) } : {},
-        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
-        bokehExponent!=null ? { bokehexponent: String(bokehExponent) } : {},
-        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
-        col1 ? { col1 } : {},
-        col2 ? { col2 } : {},
-        bg1 ? { bg1 } : {},
-        bg2 ? { bg2 } : {},
-        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
-      );
+      const attrs = { preset: preset || 'calm' };
+      if (speed != null) attrs.speed = String(speed);
+      if (lineCount != null) attrs.linecount = String(lineCount);
+      if (amplitude != null) attrs.amplitude = String(amplitude);
+      if (thickness != null) attrs.thickness = String(thickness);
+      if (softnessBase != null) attrs.softnessbase = String(softnessBase);
+      if (softnessRange != null) attrs.softnessrange = String(softnessRange);
+      if (amplitudeFalloff != null) attrs.amplitudefalloff = String(amplitudeFalloff);
+      if (yOffset != null) attrs.yoffset = String(yOffset);
+      if (lineThickness != null) attrs.linethickness = String(lineThickness);
+      if (bokehExponent != null) attrs.bokehexponent = String(bokehExponent);
+      if (bgAngle != null) attrs.bgangle = String(bgAngle);
+      if (col1) attrs.col1 = col1;
+      if (col2) attrs.col2 = col2;
+      if (bg1) attrs.bg1 = bg1;
+      if (bg2) attrs.bg2 = bg2;
 
       return (
         wp.element.createElement(
@@ -103,7 +99,7 @@
               }),
               wp.element.createElement(TextControl, {
                 label: __('Thickness', 'gs'),
-                value: thickness ?? '',
+                value: thickness != null ? String(thickness) : '',
                 onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) })
               }),
               wp.element.createElement(TextControl, {
@@ -174,27 +170,23 @@
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
-      const attrs = Object.assign({ preset: preset || 'calm' },
-        speed!=null ? { speed: String(speed) } : {},
-        lineCount!=null ? { linecount: String(lineCount) } : {},
-        amplitude!=null ? { amplitude: String(amplitude) } : {},
-        thickness!=null ? { thickness: String(thickness) } : {},
-        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
-        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
-        yOffset!=null ? { yoffset: String(yOffset) } : {},
-        lineThickness!=null ? { linethickness: String(lineThickness) } : {},
-        softnessBase!=null ? { softnessbase: String(softnessBase) } : {},
-        softnessRange!=null ? { softnessrange: String(softnessRange) } : {},
-        amplitudeFalloff!=null ? { amplitudefalloff: String(amplitudeFalloff) } : {},
-        bokehExponent!=null ? { bokehexponent: String(bokehExponent) } : {},
-        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
-        col1 ? { col1 } : {},
-        col2 ? { col2 } : {},
-        bg1 ? { bg1 } : {},
-        bg2 ? { bg2 } : {},
-        bgAngle!=null ? { bgangle: String(bgAngle) } : {},
-      );
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
+      const attrs = { preset: preset || 'calm' };
+      if (speed != null) attrs.speed = String(speed);
+      if (lineCount != null) attrs.linecount = String(lineCount);
+      if (amplitude != null) attrs.amplitude = String(amplitude);
+      if (thickness != null) attrs.thickness = String(thickness);
+      if (softnessBase != null) attrs.softnessbase = String(softnessBase);
+      if (softnessRange != null) attrs.softnessrange = String(softnessRange);
+      if (amplitudeFalloff != null) attrs.amplitudefalloff = String(amplitudeFalloff);
+      if (yOffset != null) attrs.yoffset = String(yOffset);
+      if (lineThickness != null) attrs.linethickness = String(lineThickness);
+      if (bokehExponent != null) attrs.bokehexponent = String(bokehExponent);
+      if (bgAngle != null) attrs.bgangle = String(bgAngle);
+      if (col1) attrs.col1 = col1;
+      if (col2) attrs.col2 = col2;
+      if (bg1) attrs.bg1 = bg1;
+      if (bg2) attrs.bg2 = bg2;
       return wp.element.createElement('div', { style: { minHeight: '300px' } },
         wp.element.createElement('gradient-shader', Object.assign({ style: 'width:100%;height:100%;display:block' }, attrs))
       );
