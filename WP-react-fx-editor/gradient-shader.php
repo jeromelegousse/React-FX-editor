@@ -34,6 +34,7 @@ add_action('init', function () {
       'speed' => '',
       'linecount' => '',
       'amplitude' => '',
+      'thickness' => '',
       'yoffset' => '',
       'linethickness' => '',
       'softnessbase' => '',
@@ -50,7 +51,7 @@ add_action('init', function () {
     if ($a['preset'] === '') { $a['preset'] = gs_get_default_preset(); }
 
     $attrs = ['preset' => esc_attr($a['preset'])];
-    foreach (['speed','linecount','amplitude','yoffset','linethickness','softnessbase','softnessrange','amplitudefalloff','bokehexponent','bgangle','col1','col2','bg1','bg2'] as $k) {
+    foreach (['speed','linecount','amplitude','thickness','yoffset','linethickness','softnessbase','softnessrange','amplitudefalloff','bokehexponent','bgangle','col1','col2','bg1','bg2'] as $k) {
       if ($a[$k] !== '') $attrs[$k] = esc_attr($a[$k]);
     }
     $attr_str = '';
@@ -100,6 +101,7 @@ add_action('rest_api_init', function () {
         'speed' => floatval($data['speed'] ?? 1.0),
         'linecount' => max(1, intval($data['linecount'] ?? 10)),
         'amplitude' => floatval($data['amplitude'] ?? 0.15),
+        'thickness' => max(0.0001, floatval($data['thickness'] ?? 0.003)),
         'yoffset' => floatval($data['yoffset'] ?? 0.15),
         'linethickness' => max(0.0001, floatval($data['linethickness'] ?? 0.003)),
         'softnessbase' => max(0.0, floatval($data['softnessbase'] ?? 0.0)),
