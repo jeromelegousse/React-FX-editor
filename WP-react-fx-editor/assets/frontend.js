@@ -110,25 +110,43 @@
 
   class GradientShaderEl extends HTMLElement {
     connectedCallback(){
+      this._initRetries = 0;
+      this._retryTimer = null;
+      this._initWebGL();
+    }
+
+    disconnectedCallback(){
+      if (this._retryTimer) {
+        clearTimeout(this._retryTimer);
+        this._retryTimer = null;
+      }
+      if (this._resize) window.removeEventListener('resize', this._resize);
+      if (this._raf) cancelAnimationFrame(this._raf);
+      if (this._mo) this._mo.disconnect();
+    }
+
+    _initWebGL(){
+      if (!this.isConnected || this._gl) return;
+
       this._clearFallback();
 
       const cfg = this._getConfig();
-      this._canvas = document.createElement('canvas');
-      this._canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
-      this._canvas.setAttribute('aria-hidden', 'true');
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+      canvas.setAttribute('aria-hidden', 'true');
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
       this.style.minHeight = this.style.minHeight || '300px';
 
-      const gl = this._canvas.getContext('webgl') || this._canvas.getContext('experimental-webgl');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
-        this._gl = null;
-        this._canvas = null;
         this._applyFallbackGradient(cfg);
+        this._scheduleRetry();
         return;
       }
 
+      this._canvas = canvas;
       this.appendChild(this._canvas);
       this._gl = gl;
 
@@ -138,6 +156,7 @@
         this._canvas = null;
         this._gl = null;
         this._applyFallbackGradient(cfg);
+        this._scheduleRetry();
         return;
       }
       this._gl.useProgram(this._program);
@@ -179,12 +198,34 @@
       this._resize();
       this._updateUniforms();
       this._raf = requestAnimationFrame(this._render.bind(this));
+      this._cancelRetry();
+      this._initRetries = 0;
     }
 
-    disconnectedCallback(){
-      if (this._resize) window.removeEventListener('resize', this._resize);
-      if (this._raf) cancelAnimationFrame(this._raf);
-      if (this._mo) this._mo.disconnect();
+    _scheduleRetry(){
+      if (!this._shouldRetry()) return;
+      if (this._retryTimer) return;
+
+      const attempt = this._initRetries || 0;
+      if (attempt >= 20) return;
+      const delay = attempt < 3 ? 300 : Math.min(4000, 600 * attempt);
+
+      this._retryTimer = setTimeout(() => {
+        this._retryTimer = null;
+        this._initRetries = attempt + 1;
+        this._initWebGL();
+      }, delay);
+    }
+
+    _shouldRetry(){
+      return !!(document && document.body && document.body.classList.contains('wp-admin'));
+    }
+
+    _cancelRetry(){
+      if (this._retryTimer) {
+        clearTimeout(this._retryTimer);
+        this._retryTimer = null;
+      }
     }
 
     _clearFallback(){
