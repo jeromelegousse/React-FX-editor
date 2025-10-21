@@ -209,6 +209,8 @@
     );
   }
 
+  let root;
+
   function mount(){
     const target = document.getElementById('gs-admin-app');
     if (!target) {
@@ -217,10 +219,13 @@
 
     const app = element.createElement(App);
 
-    if (typeof element.render === 'function') {
+    if (typeof element.createRoot === 'function') {
+      if (!root) {
+        root = element.createRoot(target);
+      }
+      root.render(app);
+    } else if (typeof element.render === 'function') {
       element.render(app, target);
-    } else if (typeof element.createRoot === 'function') {
-      element.createRoot(target).render(app);
     }
   }
 
