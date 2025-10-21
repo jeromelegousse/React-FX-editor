@@ -180,7 +180,7 @@
               onChange: (v)=> setField('bgangle')(v == null ? 0 : v)
             })
           )
-        )
+        ),
         element.createElement('div', { className: 'gs-actions', style: { marginTop:'12px' } },
           element.createElement(Button, { isPrimary: true, onClick: savePreset }, __('Enregistrer le preset', 'gs')),
           element.createElement(Button, { onClick: ()=> makeDefault(name) }, __('Définir par défaut', 'gs'))
