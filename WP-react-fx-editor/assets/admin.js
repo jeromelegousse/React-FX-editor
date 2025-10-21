@@ -143,27 +143,128 @@
           label: __('Modèle de base', 'gs'),
           value: base,
           onChange: setBase,
-          options: Object.keys(BUILTIN).map(k=>({label:k, value:k}))
+          options: Object.keys(BUILTIN).map(k=>({label:k, value:k})),
+          __next40pxDefaultSize: true,
+          __nextHasNoMarginBottom: true
         }),
-        element.createElement(TextControl, { label: __('Nom du preset', 'gs'), value: name, onChange: setName }),
+        element.createElement(TextControl, {
+          label: __('Nom du preset', 'gs'),
+          value: name,
+          onChange: setName,
+          __next40pxDefaultSize: true,
+          __nextHasNoMarginBottom: true
+        }),
         element.createElement('div', { className: 'gs-preview', style: { margin: '12px 0' } },
           element.createElement('gradient-shader', { ref: prevRef, style: { display: 'block', width: '100%', height: '100%' } })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' } },
-          element.createElement(RangeControl, { label:'Speed', min:0.5, max:3, step:0.01, value: cfg.speed, onChange: setField('speed') }),
-          element.createElement(RangeControl, { label:'Line Count', min:1, max:32, step:1, value: cfg.linecount, onChange: setField('linecount') }),
-          element.createElement(TextControl, { label:'Amplitude', value: String(cfg.amplitude), onChange: (v)=> setField('amplitude')(parseFloat(v||'0')) }),
-          element.createElement(TextControl, { label:'Thickness', value: cfg.thickness != null ? String(cfg.thickness) : '', onChange: (v)=> setField('thickness')(parseFloat(v||'0')) }),
-          element.createElement(TextControl, { label:'Softness Base', value: String(cfg.softnessbase), onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')) }),
-          element.createElement(TextControl, { label:'Amplitude Falloff', value: String(cfg.amplitudefalloff), onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')) }),
-          element.createElement(TextControl, { label:'Y Offset', value: String(cfg.yoffset), onChange: (v)=> setField('yoffset')(parseFloat(v||'0')) })
+          element.createElement(RangeControl, {
+            label:'Speed',
+            min:0.5,
+            max:3,
+            step:0.01,
+            value: cfg.speed,
+            onChange: setField('speed'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(RangeControl, {
+            label:'Line Count',
+            min:1,
+            max:32,
+            step:1,
+            value: cfg.linecount,
+            onChange: setField('linecount'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(TextControl, {
+            label:'Amplitude',
+            value: String(cfg.amplitude),
+            onChange: (v)=> setField('amplitude')(parseFloat(v||'0')),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(TextControl, {
+            label:'Thickness',
+            value: cfg.thickness != null ? String(cfg.thickness) : '',
+            onChange: (v)=> setField('thickness')(parseFloat(v||'0')),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(TextControl, {
+            label:'Softness Base',
+            value: String(cfg.softnessbase),
+            onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(TextControl, {
+            label:'Amplitude Falloff',
+            value: String(cfg.amplitudefalloff),
+            onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(TextControl, {
+            label:'Y Offset',
+            value: String(cfg.yoffset),
+            onChange: (v)=> setField('yoffset')(parseFloat(v||'0')),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px' } },
-          element.createElement(RangeControl, { label:'Line Thickness', min:0.001, max:0.01, step:0.0005, value: cfg.linethickness, onChange: setField('linethickness') }),
-          element.createElement(RangeControl, { label:'Softness Base', min:0, max:0.1, step:0.001, value: cfg.softnessbase, onChange: setField('softnessbase') }),
-          element.createElement(RangeControl, { label:'Softness Range', min:0, max:0.5, step:0.005, value: cfg.softnessrange, onChange: setField('softnessrange') }),
-          element.createElement(RangeControl, { label:'Amplitude Falloff', min:0, max:0.2, step:0.001, value: cfg.amplitudefalloff, onChange: setField('amplitudefalloff') }),
-          element.createElement(RangeControl, { label:'Bokeh Exponent', min:1, max:6, step:0.1, value: cfg.bokehexponent, onChange: setField('bokehexponent') })
+          element.createElement(RangeControl, {
+            label:'Line Thickness',
+            min:0.001,
+            max:0.01,
+            step:0.0005,
+            value: cfg.linethickness,
+            onChange: setField('linethickness'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(RangeControl, {
+            label:'Softness Base',
+            min:0,
+            max:0.1,
+            step:0.001,
+            value: cfg.softnessbase,
+            onChange: setField('softnessbase'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(RangeControl, {
+            label:'Softness Range',
+            min:0,
+            max:0.5,
+            step:0.005,
+            value: cfg.softnessrange,
+            onChange: setField('softnessrange'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(RangeControl, {
+            label:'Amplitude Falloff',
+            min:0,
+            max:0.2,
+            step:0.001,
+            value: cfg.amplitudefalloff,
+            onChange: setField('amplitudefalloff'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          }),
+          element.createElement(RangeControl, {
+            label:'Bokeh Exponent',
+            min:1,
+            max:6,
+            step:0.1,
+            value: cfg.bokehexponent,
+            onChange: setField('bokehexponent'),
+            __next40pxDefaultSize: true,
+            __nextHasNoMarginBottom: true
+          })
         ),
         element.createElement('div', { style: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px' } },
           ColorField({ label:'col1', value: cfg.col1, onChange: setField('col1') }),
@@ -177,7 +278,9 @@
               max: 360,
               step: 1,
               value: cfg.bgangle != null ? cfg.bgangle : 0,
-              onChange: (v)=> setField('bgangle')(v == null ? 0 : v)
+              onChange: (v)=> setField('bgangle')(v == null ? 0 : v),
+              __next40pxDefaultSize: true,
+              __nextHasNoMarginBottom: true
             })
           )
         )
