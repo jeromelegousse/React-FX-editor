@@ -98,19 +98,21 @@
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
               }),
-              wp.element.createElement(TextControl, {
+              wp.element.createElement(RangeControl, {
                 label: __('Amplitude', 'gs'),
-                value: amplitude ?? '',
-                onChange: (v)=> setAttributes({ amplitude: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
+                value: amplitude,
+                min: 0,
+                max: 0.5,
+                step: 0.001,
+                onChange: (v)=> setAttributes({ amplitude: (v === '' || v == null || Number.isNaN(v)) ? undefined : v })
               }),
-              wp.element.createElement(TextControl, {
+              wp.element.createElement(RangeControl, {
                 label: __('Thickness', 'gs'),
-                value: thickness != null ? String(thickness) : '',
-                onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
+                value: thickness,
+                min: 0.001,
+                max: 0.01,
+                step: 0.0001,
+                onChange: (v)=> setAttributes({ thickness: (v === '' || v == null || Number.isNaN(v)) ? undefined : v })
               }),
               wp.element.createElement(TextControl, {
                 label: __('Softness Base', 'gs'),
