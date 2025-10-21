@@ -73,7 +73,9 @@
                 label: __('Preset', 'gs'),
                 value: preset || '',
                 options: [{label:'—', value:''}, ...presetOptions],
-                onChange: (v)=> setAttributes({ preset: v })
+                onChange: (v)=> setAttributes({ preset: v }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement('p', null, __('Laissez vide un champ pour garder la valeur du preset.', 'gs'))
             ),
@@ -84,74 +86,100 @@
                 label: __('Speed', 'gs'),
                 value: speed,
                 onChange: (v)=> setAttributes({ speed: v }),
-                min: 0.5, max: 3, step: 0.01
+                min: 0.5, max: 3, step: 0.01,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Line Count', 'gs'),
                 value: lineCount,
                 onChange: (v)=> setAttributes({ lineCount: v }),
-                min: 1, max: 32, step: 1
+                min: 1, max: 32, step: 1,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(TextControl, {
                 label: __('Amplitude', 'gs'),
                 value: amplitude ?? '',
-                onChange: (v)=> setAttributes({ amplitude: v === '' ? undefined : parseFloat(v) })
+                onChange: (v)=> setAttributes({ amplitude: v === '' ? undefined : parseFloat(v) }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(TextControl, {
                 label: __('Thickness', 'gs'),
                 value: thickness != null ? String(thickness) : '',
-                onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) })
+                onChange: (v)=> setAttributes({ thickness: v === '' ? undefined : parseFloat(v) }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(TextControl, {
                 label: __('Softness Base', 'gs'),
                 value: softnessBase ?? '',
-                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) })
+                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(TextControl, {
                 label: __('Amplitude Falloff', 'gs'),
                 value: amplitudeFalloff ?? '',
-                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) })
+                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(TextControl, {
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
-                onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) })
+                onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Line Thickness', 'gs'),
                 value: lineThickness,
                 onChange: (v)=> setAttributes({ lineThickness: v }),
-                min: 0.001, max: 0.01, step: 0.0005
+                min: 0.001, max: 0.01, step: 0.0005,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Softness Base', 'gs'),
                 value: softnessBase,
                 onChange: (v)=> setAttributes({ softnessBase: v }),
-                min: 0, max: 0.1, step: 0.001
+                min: 0, max: 0.1, step: 0.001,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Softness Range', 'gs'),
                 value: softnessRange,
                 onChange: (v)=> setAttributes({ softnessRange: v }),
-                min: 0, max: 0.5, step: 0.005
+                min: 0, max: 0.5, step: 0.005,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Amplitude Falloff', 'gs'),
                 value: amplitudeFalloff,
                 onChange: (v)=> setAttributes({ amplitudeFalloff: v }),
-                min: 0, max: 0.2, step: 0.001
+                min: 0, max: 0.2, step: 0.001,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Bokeh Exponent', 'gs'),
                 value: bokehExponent,
                 onChange: (v)=> setAttributes({ bokehExponent: v }),
-                min: 1, max: 6, step: 0.1
+                min: 1, max: 6, step: 0.1,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               }),
               wp.element.createElement(RangeControl, {
                 label: __('Background Angle', 'gs'),
                 value: bgAngle,
                 onChange: (v)=> setAttributes({ bgAngle: v }),
-                min: 0, max: 360, step: 1
+                min: 0, max: 360, step: 1,
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
               })
             ),
             wp.element.createElement(
