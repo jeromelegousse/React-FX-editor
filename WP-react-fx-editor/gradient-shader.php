@@ -158,3 +158,22 @@ add_action('enqueue_block_editor_assets', function(){
   }
   wp_enqueue_script($view_handle);
 });
+
+add_filter('block_editor_iframe_sandbox_attributes', function ($attributes) {
+  $tokens = preg_split('/\s+/', trim((string) $attributes));
+  $tokens = array_filter($tokens);
+
+  $required = [
+    'allow-scripts',
+    'allow-same-origin',
+    'allow-pointer-lock',
+  ];
+
+  foreach ($required as $token) {
+    if (!in_array($token, $tokens, true)) {
+      $tokens[] = $token;
+    }
+  }
+
+  return implode(' ', $tokens);
+});
