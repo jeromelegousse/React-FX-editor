@@ -147,7 +147,7 @@
     _initWebGL(){
       if (!this.isConnected || this._gl) return;
 
-      this._clearFallback();
+      this._clearFallback(false);
 
       const cfg = this._getConfig();
       const canvas = document.createElement('canvas');
@@ -226,6 +226,7 @@
       this._raf = requestAnimationFrame(this._render.bind(this));
       this._cancelRetry();
       this._initRetries = 0;
+      this._clearFallback(true);
     }
 
     _scheduleRetry(){
@@ -254,7 +255,14 @@
       }
     }
 
-    _clearFallback(){
+    _getFallbackHost(){
+      if (this.dataset && this.dataset.hasFallback === 'true' && this.parentElement) {
+        return this.parentElement;
+      }
+      return this;
+    }
+
+    _clearFallback(clearHost = true){
       if (this._fallbackLayer && this.contains(this._fallbackLayer)) {
         this.removeChild(this._fallbackLayer);
       }
@@ -264,6 +272,7 @@
       this._fallbackLayer = null;
       this._fallbackMessage = null;
       this._fallbackActive = false;
+
       if (this.style) {
         this.style.background = '';
         this.style.backgroundImage = '';
@@ -271,6 +280,23 @@
       }
       if (this.dataset && this.dataset.gsFallback) {
         delete this.dataset.gsFallback;
+      }
+      if (this.dataset && this.dataset.gsFallbackActive) {
+        delete this.dataset.gsFallbackActive;
+      }
+
+      const host = this._getFallbackHost();
+      if (host && host !== this && clearHost) {
+        const layer = host.querySelector('[data-gs-fallback-layer]');
+        if (layer) host.removeChild(layer);
+        const message = host.querySelector('[data-gs-fallback-message]');
+        if (message) host.removeChild(message);
+        host.style.background = '';
+        host.style.backgroundImage = '';
+        host.style.removeProperty('background-blend-mode');
+        if (host.dataset && host.dataset.gsFallbackActive) {
+          delete host.dataset.gsFallbackActive;
+        }
       }
     }
 
@@ -286,26 +312,46 @@
       const pct = (value)=> `${Number(value.toFixed(3))}%`;
       const accentGradient = `repeating-linear-gradient(90deg, ${cfg.col1} 0%, ${cfg.col1} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentHalf)}, ${cfg.col2} ${pct(accentStep)})`;
 
-      this.style.background = cfg.bg1;
-      this.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
-      this.style.backgroundBlendMode = 'screen';
+      const host = this._getFallbackHost();
+
+      host.style.position = host.style.position || 'relative';
+      host.style.display = host.style.display || 'block';
+      host.style.width = host.style.width || '100%';
+      host.style.minHeight = host.style.minHeight || '300px';
+      host.style.height = host.style.height || '100%';
+      host.style.overflow = host.style.overflow || 'hidden';
+      host.style.borderRadius = host.style.borderRadius || 'inherit';
+      host.style.background = cfg.bg1;
+      host.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
+      host.style.backgroundBlendMode = 'screen';
+      if (host.dataset) {
+        host.dataset.gsFallbackActive = 'true';
+      }
+
       this.dataset.gsFallback = 'true';
       this._fallbackActive = true;
 
-      const layer = document.createElement('div');
-      layer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:inherit;mix-blend-mode:screen;opacity:0.6;pointer-events:none;background-repeat:no-repeat;background-size:cover';
-      layer.setAttribute('aria-hidden', 'true');
+      let layer = host.querySelector('[data-gs-fallback-layer]');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.dataset.gsFallbackLayer = 'true';
+        layer.setAttribute('aria-hidden', 'true');
+        layer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:inherit;mix-blend-mode:screen;opacity:0.6;pointer-events:none;background-repeat:no-repeat;background-size:cover';
+        host.appendChild(layer);
+      }
       layer.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
-      this.appendChild(layer);
       this._fallbackLayer = layer;
 
-      const message = document.createElement('span');
-      message.dataset.gsFallbackMessage = 'true';
-      message.setAttribute('role', 'status');
-      message.setAttribute('aria-live', 'polite');
-      message.textContent = this.getAttribute('fallback-text') || __('Interactive gradient disabled: WebGL unavailable.', 'gs');
-      message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
-      this.appendChild(message);
+      let message = host.querySelector('[data-gs-fallback-message]');
+      if (!message) {
+        message = document.createElement('span');
+        message.dataset.gsFallbackMessage = 'true';
+        message.setAttribute('role', 'status');
+        message.setAttribute('aria-live', 'polite');
+        message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
+        host.appendChild(message);
+      }
+      message.textContent = this.getAttribute('fallback-text') || 'Interactive gradient disabled: WebGL unavailable.';
       this._fallbackMessage = message;
     }
 
