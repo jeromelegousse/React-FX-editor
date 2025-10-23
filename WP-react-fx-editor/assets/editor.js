@@ -83,6 +83,14 @@
             wp.element.createElement(
               PanelBody,
               { title: __('Paramètres', 'gs'), initialOpen: false },
+              wp.element.createElement(TextControl, {
+                label: __('Minimum height', 'gs'),
+                value: minHeight ?? '',
+                onChange: (v)=> setAttributes({ minHeight: v === '' ? undefined : v }),
+                help: __('CSS value (e.g., 300px, 40vh). Leave empty for default.', 'gs'),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
+              }),
               wp.element.createElement(RangeControl, {
                 label: __('Speed', 'gs'),
                 value: speed,
@@ -116,20 +124,6 @@
                 onChange: (v)=> setAttributes({ thickness: (v === '' || v == null || Number.isNaN(v)) ? undefined : v })
               }),
               wp.element.createElement(TextControl, {
-                label: __('Softness Base', 'gs'),
-                value: softnessBase ?? '',
-                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
-              }),
-              wp.element.createElement(TextControl, {
-                label: __('Amplitude Falloff', 'gs'),
-                value: amplitudeFalloff ?? '',
-                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
-              }),
-              wp.element.createElement(TextControl, {
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
                 onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) }),
@@ -147,7 +141,7 @@
               wp.element.createElement(RangeControl, {
                 label: __('Softness Base', 'gs'),
                 value: softnessBase,
-                onChange: (v)=> setAttributes({ softnessBase: v }),
+                onChange: (v)=> setAttributes({ softnessBase: (v === '' || v == null || Number.isNaN(v)) ? undefined : v }),
                 min: 0, max: 0.1, step: 0.001,
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
@@ -163,7 +157,7 @@
               wp.element.createElement(RangeControl, {
                 label: __('Amplitude Falloff', 'gs'),
                 value: amplitudeFalloff,
-                onChange: (v)=> setAttributes({ amplitudeFalloff: v }),
+                onChange: (v)=> setAttributes({ amplitudeFalloff: (v === '' || v == null || Number.isNaN(v)) ? undefined : v }),
                 min: 0, max: 0.2, step: 0.001,
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
@@ -208,7 +202,7 @@
             )
           ),
           wp.element.createElement('div', blockProps,
-            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
+            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
           )
         )
       );

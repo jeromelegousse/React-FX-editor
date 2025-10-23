@@ -67,6 +67,8 @@ add_action('init', function () {
 
     if ($a['preset'] === '') { $a['preset'] = gs_get_default_preset(); }
 
+    gs_ensure_view_script_enqueued();
+
     $attrs = ['preset' => esc_attr($a['preset'])];
     foreach (['speed','linecount','amplitude','thickness','yoffset','linethickness','softnessbase','softnessrange','amplitudefalloff','bokehexponent','bgangle','col1','col2','bg1','bg2'] as $k) {
       if ($a[$k] !== '') $attrs[$k] = esc_attr($a[$k]);
@@ -103,7 +105,7 @@ add_action('admin_enqueue_scripts', function($hook) {
   wp_localize_script('gs-admin', 'GS_ADMIN', [
     'nonce' => wp_create_nonce('wp_rest'),
     'rest'  => esc_url_raw( rest_url('gs/v1/') ),
-    'config'=> [ 'default' => gs_get_default_preset(), 'userPresets' => gs_get_user_presets() ]
+    'config'=> gs_get_config_payload()
   ]);
 });
 

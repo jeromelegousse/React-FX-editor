@@ -8,6 +8,13 @@
     custom:   {}
   };
 
+  const getGlobalConfig = () => {
+    if (typeof window !== 'undefined' && typeof window.GS_CONFIG !== 'undefined') return window.GS_CONFIG;
+    if (typeof globalThis !== 'undefined' && typeof globalThis.GS_CONFIG !== 'undefined') return globalThis.GS_CONFIG;
+    if (typeof GS_CONFIG !== 'undefined') return GS_CONFIG;
+    return null;
+  };
+
   const clamp = (v, min, max)=> Math.min(max, Math.max(min, v));
   const hexToRgbf = (hex)=>{
     if (!hex) return [1,1,1];
@@ -130,6 +137,10 @@
       if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
+      if (this._ro) {
+        this._ro.disconnect();
+        this._ro = null;
+      }
     }
 
     _initWebGL(){
@@ -144,7 +155,7 @@
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
-      this.style.minHeight = this.style.minHeight || '300px';
+      this.style.minHeight = this._resolveMinHeight();
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
@@ -199,6 +210,13 @@
       this._start = performance.now();
       this._resize = this._resize.bind(this);
       window.addEventListener('resize', this._resize);
+      if (typeof ResizeObserver !== 'undefined') {
+        if (this._ro) {
+          this._ro.disconnect();
+        }
+        this._ro = new ResizeObserver(()=> this._resize());
+        this._ro.observe(this);
+      }
       this._mo = new MutationObserver(()=> this._updateUniforms());
       this._mo.observe(this, { attributes: true });
 
@@ -259,7 +277,7 @@
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
-      this.style.minHeight = this.style.minHeight || '300px';
+      this.style.minHeight = this._resolveMinHeight();
 
       const baseGradient = `linear-gradient(135deg, ${cfg.bg1}, ${cfg.bg2})`;
       const accentStep = Math.max(1, 100 / Math.max(1, cfg.linecount));
@@ -292,9 +310,18 @@
     }
 
     _getConfig(){
-      const presetName = (this.getAttribute('preset') || 'calm').toLowerCase();
-      const user = (window.GS_CONFIG && window.GS_CONFIG.userPresets && window.GS_CONFIG.userPresets[presetName]) || null;
-      const p = user || PRESETS[presetName] || PRESETS.calm;
+      const globalCfg = getGlobalConfig();
+      const requestedPreset = (() => {
+        const attr = this.getAttribute('preset');
+        if (attr && attr.trim() !== '') return attr.trim();
+        if (globalCfg && typeof globalCfg.default === 'string') return globalCfg.default;
+        return 'calm';
+      })();
+      const presetKey = requestedPreset.toLowerCase();
+      const userPresets = (globalCfg && globalCfg.userPresets) ? globalCfg.userPresets : {};
+      const userKey = Object.keys(userPresets).find((key) => key.toLowerCase() === presetKey);
+      const user = userKey ? userPresets[userKey] : null;
+      const p = user || PRESETS[presetKey] || PRESETS.calm;
       const getAttr = (name)=>{
         const direct = this.getAttribute(name);
         if (direct != null) return direct;
@@ -350,6 +377,7 @@
     }
 
     _updateUniforms(){
+      this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
       const gl = this._gl;
       gl.uniform1f(this._u.uSpeed, cfg.speed);
@@ -380,6 +408,24 @@
       gl.uniform1f(this._u.iTime, t);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       this._raf = requestAnimationFrame(this._render.bind(this));
+    }
+
+    _resolveMinHeight(){
+      const normalizedAttr = this._normalizeMinHeight(this.getAttribute('min-height'));
+      if (normalizedAttr) return normalizedAttr;
+      const normalizedInline = this._normalizeMinHeight(this.style && this.style.minHeight);
+      if (normalizedInline) return normalizedInline;
+      return '300px';
+    }
+
+    _normalizeMinHeight(value){
+      if (value == null) return null;
+      const trimmed = String(value).trim();
+      if (!trimmed) return null;
+      if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+        return `${trimmed}px`;
+      }
+      return trimmed;
     }
   }
 
