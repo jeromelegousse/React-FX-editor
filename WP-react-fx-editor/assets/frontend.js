@@ -137,7 +137,7 @@
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
-      this.style.minHeight = this.style.minHeight || '300px';
+      this.style.minHeight = this._resolveMinHeight();
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
@@ -252,7 +252,7 @@
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
-      this.style.minHeight = this.style.minHeight || '300px';
+      this.style.minHeight = this._resolveMinHeight();
 
       const baseGradient = `linear-gradient(135deg, ${cfg.bg1}, ${cfg.bg2})`;
       const accentStep = Math.max(1, 100 / Math.max(1, cfg.linecount));
@@ -342,6 +342,7 @@
     }
 
     _updateUniforms(){
+      this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
       const gl = this._gl;
       gl.uniform1f(this._u.uSpeed, cfg.speed);
@@ -372,6 +373,24 @@
       gl.uniform1f(this._u.iTime, t);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       this._raf = requestAnimationFrame(this._render.bind(this));
+    }
+
+    _resolveMinHeight(){
+      const normalizedAttr = this._normalizeMinHeight(this.getAttribute('min-height'));
+      if (normalizedAttr) return normalizedAttr;
+      const normalizedInline = this._normalizeMinHeight(this.style && this.style.minHeight);
+      if (normalizedInline) return normalizedInline;
+      return '300px';
+    }
+
+    _normalizeMinHeight(value){
+      if (value == null) return null;
+      const trimmed = String(value).trim();
+      if (!trimmed) return null;
+      if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+        return `${trimmed}px`;
+      }
+      return trimmed;
     }
   }
 

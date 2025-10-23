@@ -26,8 +26,9 @@
 
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
-      const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, minHeight } = attributes;
+      const computedMinHeight = minHeight || '300px';
+      const blockProps = useBlockProps({ style:{ minHeight: computedMinHeight } });
 
       useEffect(()=>{
         if (!preset) {
@@ -58,6 +59,7 @@
       if (col2) attrs.col2 = col2;
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
+      attrs['min-height'] = computedMinHeight;
 
       return (
         wp.element.createElement(
@@ -82,6 +84,14 @@
             wp.element.createElement(
               PanelBody,
               { title: __('Paramètres', 'gs'), initialOpen: false },
+              wp.element.createElement(TextControl, {
+                label: __('Minimum height', 'gs'),
+                value: minHeight ?? '',
+                onChange: (v)=> setAttributes({ minHeight: v === '' ? undefined : v }),
+                help: __('CSS value (e.g., 300px, 40vh). Leave empty for default.', 'gs'),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
+              }),
               wp.element.createElement(RangeControl, {
                 label: __('Speed', 'gs'),
                 value: speed,
@@ -194,13 +204,14 @@
             )
           ),
           wp.element.createElement('div', blockProps,
-            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
+            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
           )
         )
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, minHeight } = attributes;
+      const computedMinHeight = minHeight || '300px';
       const attrs = { preset: preset || 'calm' };
       if (speed != null) attrs.speed = String(speed);
       if (lineCount != null) attrs.linecount = String(lineCount);
@@ -217,8 +228,9 @@
       if (col2) attrs.col2 = col2;
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
-      return wp.element.createElement('div', { style: { minHeight: '300px' } },
-        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
+      attrs['min-height'] = computedMinHeight;
+      return wp.element.createElement('div', { style: { minHeight: computedMinHeight } },
+        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
       );
     }
   });
