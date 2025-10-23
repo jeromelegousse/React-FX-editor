@@ -53,9 +53,8 @@
     "bg2": {
       "type": "string"
     },
-    "minHeight": {
-      "type": "string",
-      "default": "300px"
+    "fallbackText": {
+      "type": "string"
     }
   },
   "supports": {

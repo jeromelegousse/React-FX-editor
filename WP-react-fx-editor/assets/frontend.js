@@ -23,6 +23,13 @@
     return [parseInt(m[1],16)/255, parseInt(m[2],16)/255, parseInt(m[3],16)/255];
   };
 
+  const defaultFallbackText = () => {
+    if (window.GS_FALLBACK && typeof window.GS_FALLBACK.text === 'string') {
+      return window.GS_FALLBACK.text;
+    }
+    return 'Interactive gradient disabled: WebGL unavailable.';
+  };
+
   const vs = `
     attribute vec2 a_position;
     void main(){ gl_Position = vec4(a_position, 0.0, 1.0); }
@@ -295,7 +302,8 @@
       message.dataset.gsFallbackMessage = 'true';
       message.setAttribute('role', 'status');
       message.setAttribute('aria-live', 'polite');
-      message.textContent = this.getAttribute('fallback-text') || 'Interactive gradient disabled: WebGL unavailable.';
+      const attrText = this.getAttribute('fallback-text');
+      message.textContent = (attrText && attrText.trim()) ? attrText : defaultFallbackText();
       message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
       this.appendChild(message);
       this._fallbackMessage = message;
