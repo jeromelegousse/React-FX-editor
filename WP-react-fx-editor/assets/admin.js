@@ -193,20 +193,6 @@
             __nextHasNoMarginBottom: true
           }),
           element.createElement(TextControl, {
-            label:'Softness Base',
-            value: String(cfg.softnessbase),
-            onChange: (v)=> setField('softnessbase')(parseFloat(v||'0')),
-            __next40pxDefaultSize: true,
-            __nextHasNoMarginBottom: true
-          }),
-          element.createElement(TextControl, {
-            label:'Amplitude Falloff',
-            value: String(cfg.amplitudefalloff),
-            onChange: (v)=> setField('amplitudefalloff')(parseFloat(v||'0')),
-            __next40pxDefaultSize: true,
-            __nextHasNoMarginBottom: true
-          }),
-          element.createElement(TextControl, {
             label:'Y Offset',
             value: String(cfg.yoffset),
             onChange: (v)=> setField('yoffset')(parseFloat(v||'0')),

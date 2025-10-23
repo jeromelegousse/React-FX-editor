@@ -52,6 +52,9 @@
     },
     "bg2": {
       "type": "string"
+    },
+    "fallbackText": {
+      "type": "string"
     }
   },
   "supports": {

@@ -26,7 +26,7 @@
 
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText } = attributes;
       const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
 
       useEffect(()=>{
@@ -58,6 +58,7 @@
       if (col2) attrs.col2 = col2;
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
+      if (fallbackText) attrs['fallback-text'] = fallbackText;
 
       return (
         wp.element.createElement(
@@ -82,6 +83,14 @@
             wp.element.createElement(
               PanelBody,
               { title: __('Paramètres', 'gs'), initialOpen: false },
+              wp.element.createElement(TextControl, {
+                label: __('Minimum height', 'gs'),
+                value: minHeight ?? '',
+                onChange: (v)=> setAttributes({ minHeight: v === '' ? undefined : v }),
+                help: __('CSS value (e.g., 300px, 40vh). Leave empty for default.', 'gs'),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
+              }),
               wp.element.createElement(RangeControl, {
                 label: __('Speed', 'gs'),
                 value: speed,
@@ -115,20 +124,6 @@
                 onChange: (v)=> setAttributes({ thickness: (v === '' || v == null || Number.isNaN(v)) ? undefined : v })
               }),
               wp.element.createElement(TextControl, {
-                label: __('Softness Base', 'gs'),
-                value: softnessBase ?? '',
-                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
-              }),
-              wp.element.createElement(TextControl, {
-                label: __('Amplitude Falloff', 'gs'),
-                value: amplitudeFalloff ?? '',
-                onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
-              }),
-              wp.element.createElement(TextControl, {
                 label: __('Y Offset', 'gs'),
                 value: yOffset ?? '',
                 onChange: (v)=> setAttributes({ yOffset: v === '' ? undefined : parseFloat(v) }),
@@ -146,7 +141,7 @@
               wp.element.createElement(RangeControl, {
                 label: __('Softness Base', 'gs'),
                 value: softnessBase,
-                onChange: (v)=> setAttributes({ softnessBase: v }),
+                onChange: (v)=> setAttributes({ softnessBase: (v === '' || v == null || Number.isNaN(v)) ? undefined : v }),
                 min: 0, max: 0.1, step: 0.001,
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
@@ -162,7 +157,7 @@
               wp.element.createElement(RangeControl, {
                 label: __('Amplitude Falloff', 'gs'),
                 value: amplitudeFalloff,
-                onChange: (v)=> setAttributes({ amplitudeFalloff: v }),
+                onChange: (v)=> setAttributes({ amplitudeFalloff: (v === '' || v == null || Number.isNaN(v)) ? undefined : v }),
                 min: 0, max: 0.2, step: 0.001,
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
@@ -191,16 +186,29 @@
               ColorField({ label: 'Wave color 2 (col2)', value: col2, onChange: (v)=> setAttributes({ col2: v }) }),
               ColorField({ label: 'Background 1 (bg1)', value: bg1, onChange: (v)=> setAttributes({ bg1: v }) }),
               ColorField({ label: 'Background 2 (bg2)', value: bg2, onChange: (v)=> setAttributes({ bg2: v }) })
+            ),
+            wp.element.createElement(
+              PanelBody,
+              { title: __('Accessibilité', 'gs'), initialOpen: false },
+              wp.element.createElement(TextControl, {
+                label: __('Fallback message', 'gs'),
+                help: __('Displayed when WebGL is unavailable.', 'gs'),
+                value: fallbackText ?? '',
+                placeholder: (window.GS_CONFIG && window.GS_CONFIG.fallbackText) || '',
+                onChange: (v)=> setAttributes({ fallbackText: v === '' ? undefined : v }),
+                __next40pxDefaultSize: true,
+                __nextHasNoMarginBottom: true
+              })
             )
           ),
           wp.element.createElement('div', blockProps,
-            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
+            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
           )
         )
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2 } = attributes;
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText } = attributes;
       const attrs = { preset: preset || 'calm' };
       if (speed != null) attrs.speed = String(speed);
       if (lineCount != null) attrs.linecount = String(lineCount);
@@ -217,6 +225,7 @@
       if (col2) attrs.col2 = col2;
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
+      if (fallbackText) attrs['fallback-text'] = fallbackText;
       return wp.element.createElement('div', { style: { minHeight: '300px' } },
         wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
       );
