@@ -123,6 +123,10 @@
       if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
+      if (this._ro) {
+        this._ro.disconnect();
+        this._ro = null;
+      }
     }
 
     _initWebGL(){
@@ -192,6 +196,13 @@
       this._start = performance.now();
       this._resize = this._resize.bind(this);
       window.addEventListener('resize', this._resize);
+      if (typeof ResizeObserver !== 'undefined') {
+        if (this._ro) {
+          this._ro.disconnect();
+        }
+        this._ro = new ResizeObserver(()=> this._resize());
+        this._ro.observe(this);
+      }
       this._mo = new MutationObserver(()=> this._updateUniforms());
       this._mo.observe(this, { attributes: true });
 
