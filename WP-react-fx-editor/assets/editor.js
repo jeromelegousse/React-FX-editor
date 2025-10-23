@@ -115,13 +115,6 @@
                 onChange: (v)=> setAttributes({ thickness: (v === '' || v == null || Number.isNaN(v)) ? undefined : v })
               }),
               wp.element.createElement(TextControl, {
-                label: __('Softness Base', 'gs'),
-                value: softnessBase ?? '',
-                onChange: (v)=> setAttributes({ softnessBase: v === '' ? undefined : parseFloat(v) }),
-                __next40pxDefaultSize: true,
-                __nextHasNoMarginBottom: true
-              }),
-              wp.element.createElement(TextControl, {
                 label: __('Amplitude Falloff', 'gs'),
                 value: amplitudeFalloff ?? '',
                 onChange: (v)=> setAttributes({ amplitudeFalloff: v === '' ? undefined : parseFloat(v) }),
@@ -146,7 +139,7 @@
               wp.element.createElement(RangeControl, {
                 label: __('Softness Base', 'gs'),
                 value: softnessBase,
-                onChange: (v)=> setAttributes({ softnessBase: v }),
+                onChange: (v)=> setAttributes({ softnessBase: (v === '' || v == null || Number.isNaN(v)) ? undefined : v }),
                 min: 0, max: 0.1, step: 0.001,
                 __next40pxDefaultSize: true,
                 __nextHasNoMarginBottom: true
