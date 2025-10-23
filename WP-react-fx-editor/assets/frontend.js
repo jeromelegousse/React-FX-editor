@@ -8,6 +8,13 @@
     custom:   {}
   };
 
+  const getGlobalConfig = () => {
+    if (typeof window !== 'undefined' && typeof window.GS_CONFIG !== 'undefined') return window.GS_CONFIG;
+    if (typeof globalThis !== 'undefined' && typeof globalThis.GS_CONFIG !== 'undefined') return globalThis.GS_CONFIG;
+    if (typeof GS_CONFIG !== 'undefined') return GS_CONFIG;
+    return null;
+  };
+
   const clamp = (v, min, max)=> Math.min(max, Math.max(min, v));
   const hexToRgbf = (hex)=>{
     if (!hex) return [1,1,1];
@@ -295,9 +302,18 @@
     }
 
     _getConfig(){
-      const presetName = (this.getAttribute('preset') || 'calm').toLowerCase();
-      const user = (window.GS_CONFIG && window.GS_CONFIG.userPresets && window.GS_CONFIG.userPresets[presetName]) || null;
-      const p = user || PRESETS[presetName] || PRESETS.calm;
+      const globalCfg = getGlobalConfig();
+      const requestedPreset = (() => {
+        const attr = this.getAttribute('preset');
+        if (attr && attr.trim() !== '') return attr.trim();
+        if (globalCfg && typeof globalCfg.default === 'string') return globalCfg.default;
+        return 'calm';
+      })();
+      const presetKey = requestedPreset.toLowerCase();
+      const userPresets = (globalCfg && globalCfg.userPresets) ? globalCfg.userPresets : {};
+      const userKey = Object.keys(userPresets).find((key) => key.toLowerCase() === presetKey);
+      const user = userKey ? userPresets[userKey] : null;
+      const p = user || PRESETS[presetKey] || PRESETS.calm;
       const getAttr = (name)=>{
         const direct = this.getAttribute(name);
         if (direct != null) return direct;
