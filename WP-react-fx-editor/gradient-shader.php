@@ -72,7 +72,7 @@ function gs_render_admin_page() {
 add_action('admin_enqueue_scripts', function($hook) {
   if ($hook !== 'toplevel_page_gs-presets') return;
   // enqueue block view script for live preview
-  wp_enqueue_script('gs-frontend', plugins_url('assets/frontend.js', __FILE__), [], filemtime(__DIR__.'/assets/frontend.js'), true);
+  wp_enqueue_script('gs-frontend', plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
   wp_enqueue_script('gs-admin', plugins_url('assets/admin.js', __FILE__), ['wp-element','wp-components','wp-api-fetch','wp-i18n'], filemtime(__DIR__.'/assets/admin.js'), true);
   wp_enqueue_style('gs-admin-css', plugins_url('assets/admin.css', __FILE__), [], filemtime(__DIR__.'/assets/admin.css'));
   wp_localize_script('gs-admin', 'GS_ADMIN', [
@@ -154,7 +154,7 @@ add_action('enqueue_block_editor_assets', function(){
   // ensure the <gradient-shader> custom element is available in the block editor preview
   $view_handle = 'gs-gradient-shader-view-script';
   if (!wp_script_is($view_handle, 'registered')) {
-    wp_register_script($view_handle, plugins_url('assets/frontend.js', __FILE__), [], filemtime(__DIR__.'/assets/frontend.js'), true);
+    wp_register_script($view_handle, plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
   }
   wp_enqueue_script($view_handle);
 });
