@@ -1,4 +1,5 @@
 (function(){
+  const __ = window.wp?.i18n?.__ ?? ((s)=>s);
   const PRESETS = {
     calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, thickness: 0.003, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, bgangle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
     vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, thickness: 0.003, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, bgangle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
@@ -302,8 +303,7 @@
       message.dataset.gsFallbackMessage = 'true';
       message.setAttribute('role', 'status');
       message.setAttribute('aria-live', 'polite');
-      const attrText = this.getAttribute('fallback-text');
-      message.textContent = (attrText && attrText.trim()) ? attrText : defaultFallbackText();
+      message.textContent = this.getAttribute('fallback-text') || __('Interactive gradient disabled: WebGL unavailable.', 'gs');
       message.style.cssText = 'position:absolute;left:0.75rem;bottom:0.75rem;padding:0.25rem 0.5rem;font-size:0.75rem;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;pointer-events:none;letter-spacing:0.02em;';
       this.appendChild(message);
       this._fallbackMessage = message;
