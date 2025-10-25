@@ -68,6 +68,60 @@ function gs_default_fallback_message() {
   return __('Interactive gradient disabled: WebGL unavailable.', 'gradient-shader');
 }
 
+function gs_get_fallback_text() {
+  $text = get_option('gs_fallback_text');
+
+  if (!is_string($text) || trim($text) === '') {
+    $text = gs_default_fallback_message();
+  }
+
+  return apply_filters('gs_fallback_text', $text);
+}
+
+function gs_sanitize_css_dimension($value, $default = '300px') {
+  $value = is_string($value) ? trim($value) : '';
+
+  if ($value === '') {
+    return $default;
+  }
+
+  if (preg_match('/^\d+(?:\.\d+)?$/', $value)) {
+    return $value . 'px';
+  }
+
+  if (preg_match('/^calc\(.+\)$/i', $value)) {
+    return $value;
+  }
+
+  if (preg_match('/^\d+(?:\.\d+)?(px|em|rem|vh|vw|%)$/i', $value)) {
+    return $value;
+  }
+
+  return $default;
+}
+
+function gs_get_config_payload() {
+  return [
+    'default' => gs_get_default_preset(),
+    'userPresets' => gs_get_user_presets(),
+    'builtinPresets' => gs_get_builtin_presets(),
+    'fallbackText' => gs_get_fallback_text(),
+  ];
+}
+
+function gs_localize_fallback($handle) {
+  if (!wp_script_is($handle, 'registered') && !wp_script_is($handle, 'enqueued')) {
+    return;
+  }
+
+  $data = [
+    'text' => gs_get_fallback_text(),
+  ];
+
+  $script = 'window.GS_FALLBACK = ' . wp_json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ';';
+  wp_add_inline_script($handle, $script, 'before');
+}
+
 function gs_collect_shader_attributes($input) {
   $map = [
     'preset' => 'preset',
@@ -97,6 +151,9 @@ function gs_collect_shader_attributes($input) {
     'fallback-text' => 'fallback-text',
     'fallbackText' => 'fallback-text',
     'fallback_text' => 'fallback-text',
+    'minheight' => 'min-height',
+    'minHeight' => 'min-height',
+    'min_height' => 'min-height',
   ];
 
   $attrs = [];
@@ -124,6 +181,9 @@ function gs_collect_shader_attributes($input) {
         break;
       case 'fallback-text':
         $attrs['fallback-text'] = sanitize_text_field($value);
+        break;
+      case 'min-height':
+        $attrs['min-height'] = gs_sanitize_css_dimension($value);
         break;
       default:
         if (is_numeric($value)) {
@@ -196,6 +256,7 @@ function gs_percent_value($value) {
 
 function gs_build_fallback_representation($attrs) {
   $config = gs_resolve_fallback_config($attrs);
+  $minHeight = gs_sanitize_css_dimension($attrs['min-height'] ?? '300px');
 
   $baseGradient = sprintf('linear-gradient(135deg, %s, %s)', $config['bg1'], $config['bg2']);
   $accentStep = max(1, 100 / max(1, $config['linecount']));
@@ -213,7 +274,7 @@ function gs_build_fallback_representation($attrs) {
     'display:block',
     'width:100%',
     'height:100%',
-    'min-height:300px',
+    'min-height:' . $minHeight,
     'background:' . $config['bg1'],
     'background-image:' . $accentGradient . ', ' . $baseGradient,
     'background-blend-mode:screen',
@@ -229,7 +290,7 @@ function gs_build_fallback_representation($attrs) {
     'container_style' => implode(';', $containerStyleParts) . ';',
     'layer_style' => $layerStyle . ';',
     'message_style' => $messageStyle,
-    'message' => $attrs['fallback-text'] ?? gs_default_fallback_message(),
+    'message' => $attrs['fallback-text'] ?? gs_get_fallback_text(),
   ];
 }
 

@@ -24,10 +24,26 @@
     );
   }
 
+  const computeMinHeight = (value)=>{
+    if (value == null || value === '') {
+      return '300px';
+    }
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+      return '300px';
+    }
+    if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+      return `${trimmed}px`;
+    }
+    return trimmed;
+  };
+
   registerBlockType('gs/gradient-shader', {
     edit({ attributes, setAttributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText } = attributes;
-      const blockProps = useBlockProps({ style:{ minHeight:'300px' } });
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText, minHeight } = attributes;
+
+      const computedMinHeight = computeMinHeight(minHeight);
+      const blockProps = useBlockProps({ style:{ minHeight: computedMinHeight } });
 
       useEffect(()=>{
         if (!preset) {
@@ -59,6 +75,7 @@
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
       if (fallbackText) attrs['fallback-text'] = fallbackText;
+      attrs['min-height'] = computedMinHeight;
 
       return (
         wp.element.createElement(
@@ -208,7 +225,8 @@
       );
     },
     save({ attributes }) {
-      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText } = attributes;
+      const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText, minHeight } = attributes;
+      const computedMinHeight = computeMinHeight(minHeight);
       const attrs = { preset: preset || 'calm' };
       if (speed != null) attrs.speed = String(speed);
       if (lineCount != null) attrs.linecount = String(lineCount);
@@ -226,8 +244,9 @@
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
       if (fallbackText) attrs['fallback-text'] = fallbackText;
-      return wp.element.createElement('div', { style: { minHeight: '300px' } },
-        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block' } }, attrs))
+      attrs['min-height'] = computedMinHeight;
+      return wp.element.createElement('div', { style: { minHeight: computedMinHeight } },
+        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
       );
     }
   });
