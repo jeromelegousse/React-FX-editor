@@ -55,6 +55,9 @@
     },
     "fallbackText": {
       "type": "string"
+    },
+    "minHeight": {
+      "type": "string"
     }
   },
   "supports": {
