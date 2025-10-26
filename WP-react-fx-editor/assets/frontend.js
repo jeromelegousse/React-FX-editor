@@ -127,6 +127,7 @@
     connectedCallback(){
       this._initRetries = 0;
       this._retryTimer = null;
+      this._contextLost = false;
       this._initWebGL();
     }
 
@@ -135,6 +136,14 @@
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
       }
+      if (this._canvas && this._onContextLost) {
+        this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+      }
+      if (this._canvas && this._onContextRestored) {
+        this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+      }
+      this._onContextLost = null;
+      this._onContextRestored = null;
       if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
@@ -150,13 +159,17 @@
       this._clearFallback(false);
 
       const cfg = this._getConfig();
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
-      canvas.setAttribute('aria-hidden', 'true');
-      this.style.position = 'relative';
-      this.style.display = 'block';
-      this.style.width = this.style.width || '100%';
-      this.style.minHeight = this._resolveMinHeight();
+      this._lastConfig = cfg;
+      const canvas = this._canvas || document.createElement('canvas');
+      const isNewCanvas = !this._canvas;
+      if (isNewCanvas) {
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+        canvas.setAttribute('aria-hidden', 'true');
+        this.style.position = 'relative';
+        this.style.display = 'block';
+        this.style.width = this.style.width || '100%';
+        this.style.minHeight = this._resolveMinHeight();
+      }
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
@@ -165,15 +178,26 @@
         return;
       }
 
-      this._canvas = canvas;
-      this.appendChild(this._canvas);
+      this._attachContextListeners(canvas);
+
+      if (isNewCanvas) {
+        this._canvas = canvas;
+        this.appendChild(canvas);
+      } else if (!canvas.parentNode) {
+        this.appendChild(canvas);
+      }
+
       this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
       if (!this._program) {
-        this.removeChild(this._canvas);
-        this._canvas = null;
         this._gl = null;
+        if (this._canvas && this._canvas.parentNode === this) {
+          this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+          this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+          this.removeChild(this._canvas);
+        }
+        this._canvas = null;
         this._applyFallbackGradient(cfg);
         this._scheduleRetry();
         return;
@@ -227,6 +251,43 @@
       this._cancelRetry();
       this._initRetries = 0;
       this._clearFallback(true);
+      this._contextLost = false;
+    }
+
+    _attachContextListeners(canvas){
+      if (!this._onContextLost) {
+        this._onContextLost = (event)=>{
+          event.preventDefault();
+          if (this._raf) {
+            cancelAnimationFrame(this._raf);
+            this._raf = null;
+          }
+          if (this._resize) {
+            window.removeEventListener('resize', this._resize);
+          }
+          if (this._mo) this._mo.disconnect();
+          if (this._ro) this._ro.disconnect();
+          this._mo = null;
+          this._ro = null;
+          this._gl = null;
+          this._program = null;
+          this._u = null;
+          this._contextLost = true;
+          const cfg = this._lastConfig || this._getConfig();
+          this._applyFallbackGradient(cfg);
+        };
+      }
+
+      if (!this._onContextRestored) {
+        this._onContextRestored = ()=>{
+          if (!this._contextLost) return;
+          this._cancelRetry();
+          this._initWebGL();
+        };
+      }
+
+      canvas.addEventListener('webglcontextlost', this._onContextLost, false);
+      canvas.addEventListener('webglcontextrestored', this._onContextRestored, false);
     }
 
     _scheduleRetry(){
@@ -425,6 +486,7 @@
     _updateUniforms(){
       this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
+      this._lastConfig = cfg;
       const gl = this._gl;
       gl.uniform1f(this._u.uSpeed, cfg.speed);
       gl.uniform1f(this._u.uLineCount, cfg.linecount);
