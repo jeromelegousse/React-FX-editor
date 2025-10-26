@@ -1,7 +1,32 @@
 
 #gs-admin-app { max-width: 1100px; }
-.gs-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-.gs-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
-.gs-preview { height: 360px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; background: #111; }
+.gs-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
+}
+.gs-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gs-preview {
+  height: clamp(280px, 45vh, 360px);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #111;
+}
 .gs-list-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; }
 .gs-actions { display:flex; gap:8px; }
+
+@media (min-width: 960px) {
+  .gs-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}

@@ -298,6 +298,7 @@ function gs_get_config_payload() {
     'default' => gs_get_default_preset(),
     'userPresets' => gs_get_user_presets(),
     'builtinPresets' => gs_get_builtin_presets(),
+    'defaults' => gs_get_preset_defaults(),
     'fallbackText' => gs_get_fallback_text(),
     'defaults' => gs_get_preset_defaults(),
     'camel' => [
@@ -441,14 +442,14 @@ function gs_resolve_fallback_config($attrs) {
   $builtin = gs_get_builtin_presets();
   $user = gs_get_user_presets();
 
-  $base = $builtin['calm'];
+  $base = $builtin['calm'] ?? gs_normalize_preset_data([]);
 
   if (isset($builtin[$presetName])) {
-    $base = array_merge($base, $builtin[$presetName]);
+    $base = $builtin[$presetName];
   }
 
   if (isset($user[$presetName]) && is_array($user[$presetName])) {
-    $base = array_merge($base, $user[$presetName]);
+    $base = array_merge($base, gs_normalize_preset_data($user[$presetName]));
   }
 
   $config = [
@@ -659,23 +660,7 @@ add_action('rest_api_init', function () {
       $data = $req->get_param('data');
       if (!$name || !is_array($data)) return new WP_Error('gs_invalid','Nom ou données invalides',['status'=>400]);
       $presets = gs_get_user_presets();
-      $presets[$name] = [
-        'speed' => floatval($data['speed'] ?? 1.0),
-        'linecount' => max(1, intval($data['linecount'] ?? 10)),
-        'amplitude' => floatval($data['amplitude'] ?? 0.15),
-        'thickness' => max(0.0001, floatval($data['thickness'] ?? 0.003)),
-        'yoffset' => floatval($data['yoffset'] ?? 0.15),
-        'linethickness' => max(0.0001, floatval($data['linethickness'] ?? 0.003)),
-        'softnessbase' => max(0.0, floatval($data['softnessbase'] ?? 0.0)),
-        'softnessrange' => max(0.0, floatval($data['softnessrange'] ?? 0.2)),
-        'amplitudefalloff' => max(0.0, floatval($data['amplitudefalloff'] ?? 0.05)),
-        'bokehexponent' => max(0.1, floatval($data['bokehexponent'] ?? 3.0)),
-        'bgangle' => max(0.0, min(360.0, floatval($data['bgangle'] ?? 45))),
-        'col1' => sanitize_hex_color($data['col1'] ?? '#3a80ff'),
-        'col2' => sanitize_hex_color($data['col2'] ?? '#ff66e0'),
-        'bg1' => sanitize_hex_color($data['bg1'] ?? '#331600'),
-        'bg2' => sanitize_hex_color($data['bg2'] ?? '#330033'),
-      ];
+      $presets[$name] = gs_normalize_preset_data($data);
       gs_set_user_presets($presets);
       return new WP_REST_Response(['ok'=>true,'presets'=>gs_get_user_presets()],200);
     }

@@ -157,10 +157,14 @@
     return p;
   }
 
+  const FALLBACK_EMPTY_SENTINEL = '__gs_empty__';
+  const FALLBACK_PROPS_KEY = 'gsFallbackProps';
+
   class GradientShaderEl extends HTMLElement {
     connectedCallback(){
       this._initRetries = 0;
       this._retryTimer = null;
+      this._contextLost = false;
       this._initWebGL();
     }
 
@@ -169,6 +173,14 @@
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
       }
+      if (this._canvas && this._onContextLost) {
+        this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+      }
+      if (this._canvas && this._onContextRestored) {
+        this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+      }
+      this._onContextLost = null;
+      this._onContextRestored = null;
       if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
@@ -184,13 +196,17 @@
       this._clearFallback(false);
 
       const cfg = this._getConfig();
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
-      canvas.setAttribute('aria-hidden', 'true');
-      this.style.position = 'relative';
-      this.style.display = 'block';
-      this.style.width = this.style.width || '100%';
-      this.style.minHeight = this._resolveMinHeight();
+      this._lastConfig = cfg;
+      const canvas = this._canvas || document.createElement('canvas');
+      const isNewCanvas = !this._canvas;
+      if (isNewCanvas) {
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+        canvas.setAttribute('aria-hidden', 'true');
+        this.style.position = 'relative';
+        this.style.display = 'block';
+        this.style.width = this.style.width || '100%';
+        this.style.minHeight = this._resolveMinHeight();
+      }
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
@@ -199,15 +215,26 @@
         return;
       }
 
-      this._canvas = canvas;
-      this.appendChild(this._canvas);
+      this._attachContextListeners(canvas);
+
+      if (isNewCanvas) {
+        this._canvas = canvas;
+        this.appendChild(canvas);
+      } else if (!canvas.parentNode) {
+        this.appendChild(canvas);
+      }
+
       this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
       if (!this._program) {
-        this.removeChild(this._canvas);
-        this._canvas = null;
         this._gl = null;
+        if (this._canvas && this._canvas.parentNode === this) {
+          this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+          this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+          this.removeChild(this._canvas);
+        }
+        this._canvas = null;
         this._applyFallbackGradient(cfg);
         this._scheduleRetry();
         return;
@@ -261,6 +288,43 @@
       this._cancelRetry();
       this._initRetries = 0;
       this._clearFallback(true);
+      this._contextLost = false;
+    }
+
+    _attachContextListeners(canvas){
+      if (!this._onContextLost) {
+        this._onContextLost = (event)=>{
+          event.preventDefault();
+          if (this._raf) {
+            cancelAnimationFrame(this._raf);
+            this._raf = null;
+          }
+          if (this._resize) {
+            window.removeEventListener('resize', this._resize);
+          }
+          if (this._mo) this._mo.disconnect();
+          if (this._ro) this._ro.disconnect();
+          this._mo = null;
+          this._ro = null;
+          this._gl = null;
+          this._program = null;
+          this._u = null;
+          this._contextLost = true;
+          const cfg = this._lastConfig || this._getConfig();
+          this._applyFallbackGradient(cfg);
+        };
+      }
+
+      if (!this._onContextRestored) {
+        this._onContextRestored = ()=>{
+          if (!this._contextLost) return;
+          this._cancelRetry();
+          this._initWebGL();
+        };
+      }
+
+      canvas.addEventListener('webglcontextlost', this._onContextLost, false);
+      canvas.addEventListener('webglcontextrestored', this._onContextRestored, false);
     }
 
     _scheduleRetry(){
@@ -296,6 +360,49 @@
       return this;
     }
 
+    _styleDatasetKey(prop){
+      const camel = prop.replace(/-([a-z])/g, (_, c)=> c.toUpperCase());
+      return `gsOriginal${camel.charAt(0).toUpperCase()}${camel.slice(1)}`;
+    }
+
+    _trackFallbackProp(el, prop){
+      if (!el?.dataset) return;
+      const current = el.dataset[FALLBACK_PROPS_KEY] ? el.dataset[FALLBACK_PROPS_KEY].split(',').filter(Boolean) : [];
+      if (!current.includes(prop)) {
+        current.push(prop);
+        el.dataset[FALLBACK_PROPS_KEY] = current.join(',');
+      }
+    }
+
+    _setFallbackStyle(el, prop, value){
+      if (!el?.style || !el.dataset) return;
+      const key = this._styleDatasetKey(prop);
+      if (!(key in el.dataset)) {
+        const existing = el.style.getPropertyValue(prop);
+        el.dataset[key] = existing ? existing : FALLBACK_EMPTY_SENTINEL;
+      }
+      el.style.setProperty(prop, value);
+      this._trackFallbackProp(el, prop);
+    }
+
+    _restoreFallbackStyles(el){
+      if (!el?.style || !el.dataset) return;
+      const tracked = el.dataset[FALLBACK_PROPS_KEY] ? el.dataset[FALLBACK_PROPS_KEY].split(',').filter(Boolean) : [];
+      tracked.forEach((prop)=>{
+        const key = this._styleDatasetKey(prop);
+        const original = el.dataset[key];
+        if (original && original !== FALLBACK_EMPTY_SENTINEL) {
+          el.style.setProperty(prop, original);
+        } else {
+          el.style.removeProperty(prop);
+        }
+        delete el.dataset[key];
+      });
+      if (el.dataset[FALLBACK_PROPS_KEY]) {
+        delete el.dataset[FALLBACK_PROPS_KEY];
+      }
+    }
+
     _clearFallback(clearHost = true){
       if (this._fallbackLayer && this.contains(this._fallbackLayer)) {
         this.removeChild(this._fallbackLayer);
@@ -307,11 +414,7 @@
       this._fallbackMessage = null;
       this._fallbackActive = false;
 
-      if (this.style) {
-        this.style.background = '';
-        this.style.backgroundImage = '';
-        this.style.removeProperty('background-blend-mode');
-      }
+      this._restoreFallbackStyles(this);
       if (this.dataset && this.dataset.gsFallback) {
         delete this.dataset.gsFallback;
       }
@@ -325,9 +428,12 @@
         if (layer) host.removeChild(layer);
         const message = host.querySelector('[data-gs-fallback-message]');
         if (message) host.removeChild(message);
-        host.style.background = '';
-        host.style.backgroundImage = '';
-        host.style.removeProperty('background-blend-mode');
+        this._restoreFallbackStyles(host);
+        if (host.dataset && host.dataset.gsFallbackActive) {
+          delete host.dataset.gsFallbackActive;
+        }
+      } else if (host && clearHost) {
+        this._restoreFallbackStyles(host);
         if (host.dataset && host.dataset.gsFallbackActive) {
           delete host.dataset.gsFallbackActive;
         }
@@ -335,11 +441,6 @@
     }
 
     _applyFallbackGradient(cfg){
-      this.style.position = 'relative';
-      this.style.display = 'block';
-      this.style.width = this.style.width || '100%';
-      this.style.minHeight = this._resolveMinHeight();
-
       const baseGradient = `linear-gradient(135deg, ${cfg.bg1}, ${cfg.bg2})`;
       const accentStep = Math.max(1, 100 / Math.max(1, cfg.linecount));
       const accentHalf = accentStep / 2;
@@ -348,16 +449,15 @@
 
       const host = this._getFallbackHost();
 
-      host.style.position = host.style.position || 'relative';
-      host.style.display = host.style.display || 'block';
-      host.style.width = host.style.width || '100%';
-      host.style.minHeight = host.style.minHeight || '300px';
-      host.style.height = host.style.height || '100%';
-      host.style.overflow = host.style.overflow || 'hidden';
-      host.style.borderRadius = host.style.borderRadius || 'inherit';
-      host.style.background = cfg.bg1;
-      host.style.backgroundImage = `${accentGradient}, ${baseGradient}`;
-      host.style.backgroundBlendMode = 'screen';
+      const computedPosition = (typeof window !== 'undefined' && window.getComputedStyle)
+        ? window.getComputedStyle(host).position
+        : host.style.position;
+      if (!computedPosition || computedPosition === 'static') {
+        this._setFallbackStyle(host, 'position', 'relative');
+      }
+      this._setFallbackStyle(host, 'background', cfg.bg1);
+      this._setFallbackStyle(host, 'background-image', `${accentGradient}, ${baseGradient}`);
+      this._setFallbackStyle(host, 'background-blend-mode', 'screen');
       if (host.dataset) {
         host.dataset.gsFallbackActive = 'true';
       }
@@ -463,6 +563,7 @@
     _updateUniforms(){
       this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
+      this._lastConfig = cfg;
       const gl = this._gl;
       gl.uniform1f(this._u.uSpeed, cfg.speed);
       gl.uniform1f(this._u.uLineCount, cfg.linecount);
