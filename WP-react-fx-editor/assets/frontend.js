@@ -1,13 +1,5 @@
 (function(){
   const __ = window.wp?.i18n?.__ ?? ((s)=>s);
-  const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, thickness: 0.003, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, bgangle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, thickness: 0.003, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, bgangle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, thickness: 0.0025, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, bgangle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, thickness: 0.0032, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, bgangle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, thickness: 0.0028, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, bgangle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
-    custom:   {}
-  };
 
   const getGlobalConfig = () => {
     if (typeof window !== 'undefined' && typeof window.GS_CONFIG !== 'undefined') return window.GS_CONFIG;
@@ -15,6 +7,64 @@
     if (typeof GS_CONFIG !== 'undefined') return GS_CONFIG;
     return null;
   };
+
+  const getInjectedPresets = () => {
+    if (typeof window !== 'undefined' && window.GS_PRESETS && typeof window.GS_PRESETS === 'object') return window.GS_PRESETS;
+    if (typeof globalThis !== 'undefined' && globalThis.GS_PRESETS && typeof globalThis.GS_PRESETS === 'object') return globalThis.GS_PRESETS;
+    if (typeof GS_PRESETS !== 'undefined') return GS_PRESETS;
+    return null;
+  };
+
+  const getDefaultPresetValues = () => {
+    const cfg = getGlobalConfig();
+    if (cfg && cfg.defaults && typeof cfg.defaults === 'object') {
+      return Object.assign({}, cfg.defaults);
+    }
+    return {
+      speed: 1.0,
+      linecount: 10,
+      amplitude: 0.15,
+      thickness: 0.003,
+      yoffset: 0.15,
+      linethickness: 0.003,
+      softnessbase: 0.0,
+      softnessrange: 0.2,
+      amplitudefalloff: 0.05,
+      bokehexponent: 3.0,
+      bgangle: 45,
+      col1: '#3a80ff',
+      col2: '#ff66e0',
+      bg1: '#331600',
+      bg2: '#330033',
+    };
+  };
+
+  const DEFAULT_PRESET_VALUES = getDefaultPresetValues();
+
+  const applyDefaults = (preset) => Object.assign({}, DEFAULT_PRESET_VALUES, preset || {});
+
+  const PRESETS = (() => {
+    const injected = getInjectedPresets();
+    const target = (injected && typeof injected === 'object') ? injected : {};
+    Object.keys(target).forEach((key) => {
+      if (target[key] && typeof target[key] === 'object') {
+        target[key] = applyDefaults(target[key]);
+      }
+    });
+    if (!target.calm) {
+      target.calm = applyDefaults();
+    }
+    if (!target.custom || typeof target.custom !== 'object') {
+      target.custom = {};
+    }
+    return target;
+  })();
+
+  if (typeof window !== 'undefined') {
+    window.GS_PRESETS = PRESETS;
+  } else if (typeof globalThis !== 'undefined') {
+    globalThis.GS_PRESETS = PRESETS;
+  }
 
   const clamp = (v, min, max)=> Math.min(max, Math.max(min, v));
   const hexToRgbf = (hex)=>{
@@ -123,10 +173,14 @@
     return p;
   }
 
+  const FALLBACK_EMPTY_SENTINEL = '__gs_empty__';
+  const FALLBACK_PROPS_KEY = 'gsFallbackProps';
+
   class GradientShaderEl extends HTMLElement {
     connectedCallback(){
       this._initRetries = 0;
       this._retryTimer = null;
+      this._contextLost = false;
       this._initWebGL();
     }
 
@@ -135,6 +189,14 @@
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
       }
+      if (this._canvas && this._onContextLost) {
+        this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+      }
+      if (this._canvas && this._onContextRestored) {
+        this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+      }
+      this._onContextLost = null;
+      this._onContextRestored = null;
       if (this._resize) window.removeEventListener('resize', this._resize);
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
@@ -150,13 +212,17 @@
       this._clearFallback(false);
 
       const cfg = this._getConfig();
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
-      canvas.setAttribute('aria-hidden', 'true');
-      this.style.position = 'relative';
-      this.style.display = 'block';
-      this.style.width = this.style.width || '100%';
-      this.style.minHeight = this._resolveMinHeight();
+      this._lastConfig = cfg;
+      const canvas = this._canvas || document.createElement('canvas');
+      const isNewCanvas = !this._canvas;
+      if (isNewCanvas) {
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+        canvas.setAttribute('aria-hidden', 'true');
+        this.style.position = 'relative';
+        this.style.display = 'block';
+        this.style.width = this.style.width || '100%';
+        this.style.minHeight = this._resolveMinHeight();
+      }
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
@@ -165,15 +231,26 @@
         return;
       }
 
-      this._canvas = canvas;
-      this.appendChild(this._canvas);
+      this._attachContextListeners(canvas);
+
+      if (isNewCanvas) {
+        this._canvas = canvas;
+        this.appendChild(canvas);
+      } else if (!canvas.parentNode) {
+        this.appendChild(canvas);
+      }
+
       this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
       if (!this._program) {
-        this.removeChild(this._canvas);
-        this._canvas = null;
         this._gl = null;
+        if (this._canvas && this._canvas.parentNode === this) {
+          this._canvas.removeEventListener('webglcontextlost', this._onContextLost);
+          this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored);
+          this.removeChild(this._canvas);
+        }
+        this._canvas = null;
         this._applyFallbackGradient(cfg);
         this._scheduleRetry();
         return;
@@ -227,6 +304,43 @@
       this._cancelRetry();
       this._initRetries = 0;
       this._clearFallback(true);
+      this._contextLost = false;
+    }
+
+    _attachContextListeners(canvas){
+      if (!this._onContextLost) {
+        this._onContextLost = (event)=>{
+          event.preventDefault();
+          if (this._raf) {
+            cancelAnimationFrame(this._raf);
+            this._raf = null;
+          }
+          if (this._resize) {
+            window.removeEventListener('resize', this._resize);
+          }
+          if (this._mo) this._mo.disconnect();
+          if (this._ro) this._ro.disconnect();
+          this._mo = null;
+          this._ro = null;
+          this._gl = null;
+          this._program = null;
+          this._u = null;
+          this._contextLost = true;
+          const cfg = this._lastConfig || this._getConfig();
+          this._applyFallbackGradient(cfg);
+        };
+      }
+
+      if (!this._onContextRestored) {
+        this._onContextRestored = ()=>{
+          if (!this._contextLost) return;
+          this._cancelRetry();
+          this._initWebGL();
+        };
+      }
+
+      canvas.addEventListener('webglcontextlost', this._onContextLost, false);
+      canvas.addEventListener('webglcontextrestored', this._onContextRestored, false);
     }
 
     _scheduleRetry(){
@@ -260,6 +374,49 @@
         return this.parentElement;
       }
       return this;
+    }
+
+    _styleDatasetKey(prop){
+      const camel = prop.replace(/-([a-z])/g, (_, c)=> c.toUpperCase());
+      return `gsOriginal${camel.charAt(0).toUpperCase()}${camel.slice(1)}`;
+    }
+
+    _trackFallbackProp(el, prop){
+      if (!el?.dataset) return;
+      const current = el.dataset[FALLBACK_PROPS_KEY] ? el.dataset[FALLBACK_PROPS_KEY].split(',').filter(Boolean) : [];
+      if (!current.includes(prop)) {
+        current.push(prop);
+        el.dataset[FALLBACK_PROPS_KEY] = current.join(',');
+      }
+    }
+
+    _setFallbackStyle(el, prop, value){
+      if (!el?.style || !el.dataset) return;
+      const key = this._styleDatasetKey(prop);
+      if (!(key in el.dataset)) {
+        const existing = el.style.getPropertyValue(prop);
+        el.dataset[key] = existing ? existing : FALLBACK_EMPTY_SENTINEL;
+      }
+      el.style.setProperty(prop, value);
+      this._trackFallbackProp(el, prop);
+    }
+
+    _restoreFallbackStyles(el){
+      if (!el?.style || !el.dataset) return;
+      const tracked = el.dataset[FALLBACK_PROPS_KEY] ? el.dataset[FALLBACK_PROPS_KEY].split(',').filter(Boolean) : [];
+      tracked.forEach((prop)=>{
+        const key = this._styleDatasetKey(prop);
+        const original = el.dataset[key];
+        if (original && original !== FALLBACK_EMPTY_SENTINEL) {
+          el.style.setProperty(prop, original);
+        } else {
+          el.style.removeProperty(prop);
+        }
+        delete el.dataset[key];
+      });
+      if (el.dataset[FALLBACK_PROPS_KEY]) {
+        delete el.dataset[FALLBACK_PROPS_KEY];
+      }
     }
 
     _clearFallback(clearHost = true){
@@ -454,6 +611,7 @@
     _updateUniforms(){
       this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
+      this._lastConfig = cfg;
       const gl = this._gl;
       gl.uniform1f(this._u.uSpeed, cfg.speed);
       gl.uniform1f(this._u.uLineCount, cfg.linecount);
