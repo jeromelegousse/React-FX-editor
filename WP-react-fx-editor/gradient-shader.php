@@ -8,14 +8,197 @@
 
 if (!defined('ABSPATH')) exit;
 
+const GS_PRESET_DEFAULTS = [
+  'speed' => 1.0,
+  'linecount' => 10,
+  'amplitude' => 0.15,
+  'thickness' => 0.003,
+  'yoffset' => 0.15,
+  'linethickness' => 0.003,
+  'softnessbase' => 0.0,
+  'softnessrange' => 0.2,
+  'amplitudefalloff' => 0.05,
+  'bokehexponent' => 3.0,
+  'bgangle' => 45.0,
+  'col1' => '#3a80ff',
+  'col2' => '#ff66e0',
+  'bg1' => '#331600',
+  'bg2' => '#330033',
+];
+
+const GS_BUILTIN_PRESETS = [
+  'calm' => [],
+  'vibrant' => [
+    'speed' => 1.6,
+    'linecount' => 14,
+    'amplitude' => 0.22,
+    'yoffset' => 0.12,
+    'softnessbase' => 0.02,
+    'softnessrange' => 0.25,
+    'amplitudefalloff' => 0.045,
+    'bokehexponent' => 2.6,
+    'col1' => '#00ffc2',
+    'col2' => '#ff006e',
+    'bg1' => '#001219',
+    'bg2' => '#3a0ca3',
+  ],
+  'nocturne' => [
+    'speed' => 0.9,
+    'linecount' => 12,
+    'amplitude' => 0.18,
+    'yoffset' => 0.20,
+    'linethickness' => 0.0025,
+    'softnessbase' => 0.01,
+    'softnessrange' => 0.22,
+    'amplitudefalloff' => 0.04,
+    'bokehexponent' => 3.5,
+    'col1' => '#4cc9f0',
+    'col2' => '#4361ee',
+    'bg1' => '#0b132b',
+    'bg2' => '#1c2541',
+  ],
+  'sunrise' => [
+    'speed' => 1.2,
+    'linecount' => 11,
+    'amplitude' => 0.20,
+    'yoffset' => 0.10,
+    'linethickness' => 0.0032,
+    'softnessbase' => 0.015,
+    'softnessrange' => 0.23,
+    'bokehexponent' => 2.8,
+    'col1' => '#ff9e00',
+    'col2' => '#ff4d6d',
+    'bg1' => '#250902',
+    'bg2' => '#3b0d11',
+  ],
+  'mono' => [
+    'linecount' => 9,
+    'amplitude' => 0.16,
+    'linethickness' => 0.0028,
+    'softnessbase' => 0.005,
+    'softnessrange' => 0.18,
+    'bokehexponent' => 3.2,
+    'col1' => '#aaaaaa',
+    'col2' => '#ffffff',
+    'bg1' => '#111111',
+    'bg2' => '#222222',
+  ],
+];
+
+function gs_get_preset_defaults() {
+  return GS_PRESET_DEFAULTS;
+}
+
+function gs_get_preset_key_map() {
+  static $map = null;
+  if ($map !== null) {
+    return $map;
+  }
+  $map = [
+    'lineCount' => 'linecount',
+    'yOffset' => 'yoffset',
+    'lineThickness' => 'linethickness',
+    'softnessBase' => 'softnessbase',
+    'softnessRange' => 'softnessrange',
+    'amplitudeFalloff' => 'amplitudefalloff',
+    'bokehExponent' => 'bokehexponent',
+    'bgAngle' => 'bgangle',
+  ];
+  return $map;
+}
+
+function gs_normalize_preset_data($data) {
+  $defaults = gs_get_preset_defaults();
+  $normalized = $defaults;
+  if (!is_array($data)) {
+    return $normalized;
+  }
+
+  $map = gs_get_preset_key_map();
+
+  foreach ($data as $key => $value) {
+    $target = $map[$key] ?? $key;
+    if (!array_key_exists($target, $defaults)) {
+      continue;
+    }
+
+    switch ($target) {
+      case 'linecount':
+        $normalized['linecount'] = max(1, intval($value));
+        break;
+      case 'speed':
+      case 'amplitude':
+      case 'thickness':
+      case 'yoffset':
+      case 'linethickness':
+      case 'softnessbase':
+      case 'softnessrange':
+      case 'amplitudefalloff':
+        $normalized[$target] = (float) $value;
+        break;
+      case 'bokehexponent':
+        $normalized[$target] = max(0.1, (float) $value);
+        break;
+      case 'bgangle':
+        $normalized[$target] = max(0.0, min(360.0, (float) $value));
+        break;
+      case 'col1':
+      case 'col2':
+      case 'bg1':
+      case 'bg2':
+        $color = sanitize_hex_color($value);
+        if ($color) {
+          $normalized[$target] = $color;
+        }
+        break;
+    }
+  }
+
+  $normalized['thickness'] = max(0.0001, (float) $normalized['thickness']);
+  $normalized['linethickness'] = max(0.0001, (float) $normalized['linethickness']);
+  $normalized['softnessbase'] = max(0.0, (float) $normalized['softnessbase']);
+  $normalized['softnessrange'] = max(0.0, (float) $normalized['softnessrange']);
+  $normalized['amplitudefalloff'] = max(0.0, (float) $normalized['amplitudefalloff']);
+  $normalized['yoffset'] = (float) $normalized['yoffset'];
+  $normalized['amplitude'] = (float) $normalized['amplitude'];
+  $normalized['speed'] = (float) $normalized['speed'];
+
+  return $normalized;
+}
+
 function gs_get_user_presets() {
   $presets = get_option('gs_presets', []);
-  if (!is_array($presets)) $presets = [];
-  return $presets;
+  if (!is_array($presets)) {
+    return [];
+  }
+
+  $normalized = [];
+
+  foreach ($presets as $name => $preset) {
+    if (!is_string($name)) {
+      continue;
+    }
+    $normalized[$name] = gs_normalize_preset_data($preset);
+  }
+
+  return $normalized;
 }
 
 function gs_set_user_presets($presets) {
-  update_option('gs_presets', $presets);
+  if (!is_array($presets)) {
+    $presets = [];
+  }
+
+  $normalized = [];
+
+  foreach ($presets as $name => $preset) {
+    if (!is_string($name)) {
+      continue;
+    }
+    $normalized[$name] = gs_normalize_preset_data($preset);
+  }
+
+  update_option('gs_presets', $normalized);
 }
 
 function gs_get_default_preset() {
@@ -25,43 +208,13 @@ function gs_get_default_preset() {
 }
 
 function gs_get_builtin_presets() {
-  return [
-    'calm' => [
-      'linecount' => 10,
-      'col1' => '#3a80ff',
-      'col2' => '#ff66e0',
-      'bg1' => '#331600',
-      'bg2' => '#330033',
-    ],
-    'vibrant' => [
-      'linecount' => 14,
-      'col1' => '#00ffc2',
-      'col2' => '#ff006e',
-      'bg1' => '#001219',
-      'bg2' => '#3a0ca3',
-    ],
-    'nocturne' => [
-      'linecount' => 12,
-      'col1' => '#4cc9f0',
-      'col2' => '#4361ee',
-      'bg1' => '#0b132b',
-      'bg2' => '#1c2541',
-    ],
-    'sunrise' => [
-      'linecount' => 11,
-      'col1' => '#ff9e00',
-      'col2' => '#ff4d6d',
-      'bg1' => '#250902',
-      'bg2' => '#3b0d11',
-    ],
-    'mono' => [
-      'linecount' => 9,
-      'col1' => '#aaaaaa',
-      'col2' => '#ffffff',
-      'bg1' => '#111111',
-      'bg2' => '#222222',
-    ],
-  ];
+  $presets = [];
+
+  foreach (GS_BUILTIN_PRESETS as $name => $overrides) {
+    $presets[$name] = gs_normalize_preset_data($overrides);
+  }
+
+  return $presets;
 }
 
 function gs_default_fallback_message() {
@@ -105,8 +258,37 @@ function gs_get_config_payload() {
     'default' => gs_get_default_preset(),
     'userPresets' => gs_get_user_presets(),
     'builtinPresets' => gs_get_builtin_presets(),
+    'defaults' => gs_get_preset_defaults(),
     'fallbackText' => gs_get_fallback_text(),
   ];
+}
+
+function gs_attach_config_inline_script($handle) {
+  if (!wp_script_is($handle, 'registered') && !wp_script_is($handle, 'enqueued')) {
+    return;
+  }
+
+  $config = gs_get_config_payload();
+  $encoded = wp_json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  if ($encoded === false) {
+    return;
+  }
+
+  wp_add_inline_script($handle, 'window.GS_CONFIG = ' . $encoded . ';', 'before');
+}
+
+function gs_attach_presets_inline_script($handle) {
+  if (!wp_script_is($handle, 'registered') && !wp_script_is($handle, 'enqueued')) {
+    return;
+  }
+
+  $presets = gs_get_builtin_presets();
+  $encoded = wp_json_encode($presets, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  if ($encoded === false) {
+    return;
+  }
+
+  wp_add_inline_script($handle, 'window.GS_PRESETS = ' . $encoded . ';', 'before');
 }
 
 function gs_localize_fallback($handle) {
@@ -211,14 +393,14 @@ function gs_resolve_fallback_config($attrs) {
   $builtin = gs_get_builtin_presets();
   $user = gs_get_user_presets();
 
-  $base = $builtin['calm'];
+  $base = $builtin['calm'] ?? gs_normalize_preset_data([]);
 
   if (isset($builtin[$presetName])) {
-    $base = array_merge($base, $builtin[$presetName]);
+    $base = $builtin[$presetName];
   }
 
   if (isset($user[$presetName]) && is_array($user[$presetName])) {
-    $base = array_merge($base, $user[$presetName]);
+    $base = array_merge($base, gs_normalize_preset_data($user[$presetName]));
   }
 
   $config = [
@@ -403,7 +585,11 @@ add_action('admin_enqueue_scripts', function($hook) {
   if ($hook !== 'toplevel_page_gs-presets') return;
   // enqueue block view script for live preview
   wp_enqueue_script('gs-frontend', plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
+  gs_attach_config_inline_script('gs-frontend');
+  gs_attach_presets_inline_script('gs-frontend');
   wp_enqueue_script('gs-admin', plugins_url('assets/admin.js', __FILE__), ['wp-element','wp-components','wp-api-fetch','wp-i18n'], filemtime(__DIR__.'/assets/admin.js'), true);
+  gs_attach_config_inline_script('gs-admin');
+  gs_attach_presets_inline_script('gs-admin');
   wp_enqueue_style('gs-admin-css', plugins_url('assets/admin.css', __FILE__), [], filemtime(__DIR__.'/assets/admin.css'));
   wp_localize_script('gs-admin', 'GS_ADMIN', [
     'nonce' => wp_create_nonce('wp_rest'),
@@ -427,25 +613,9 @@ add_action('rest_api_init', function () {
       $data = $req->get_param('data');
       if (!$name || !is_array($data)) return new WP_Error('gs_invalid','Nom ou données invalides',['status'=>400]);
       $presets = gs_get_user_presets();
-      $presets[$name] = [
-        'speed' => floatval($data['speed'] ?? 1.0),
-        'linecount' => max(1, intval($data['linecount'] ?? 10)),
-        'amplitude' => floatval($data['amplitude'] ?? 0.15),
-        'thickness' => max(0.0001, floatval($data['thickness'] ?? 0.003)),
-        'yoffset' => floatval($data['yoffset'] ?? 0.15),
-        'linethickness' => max(0.0001, floatval($data['linethickness'] ?? 0.003)),
-        'softnessbase' => max(0.0, floatval($data['softnessbase'] ?? 0.0)),
-        'softnessrange' => max(0.0, floatval($data['softnessrange'] ?? 0.2)),
-        'amplitudefalloff' => max(0.0, floatval($data['amplitudefalloff'] ?? 0.05)),
-        'bokehexponent' => max(0.1, floatval($data['bokehexponent'] ?? 3.0)),
-        'bgangle' => max(0.0, min(360.0, floatval($data['bgangle'] ?? 45))),
-        'col1' => sanitize_hex_color($data['col1'] ?? '#3a80ff'),
-        'col2' => sanitize_hex_color($data['col2'] ?? '#ff66e0'),
-        'bg1' => sanitize_hex_color($data['bg1'] ?? '#331600'),
-        'bg2' => sanitize_hex_color($data['bg2'] ?? '#330033'),
-      ];
+      $presets[$name] = gs_normalize_preset_data($data);
       gs_set_user_presets($presets);
-      return new WP_REST_Response(['ok'=>true,'presets'=>$presets],200);
+      return new WP_REST_Response(['ok'=>true,'presets'=>gs_get_user_presets()],200);
     }
   ]);
   register_rest_route('gs/v1', '/presets/(?P<name>[\w\- ]+)', [
@@ -455,7 +625,7 @@ add_action('rest_api_init', function () {
       $name = sanitize_text_field($req['name']);
       $presets = gs_get_user_presets();
       if (isset($presets[$name])) { unset($presets[$name]); gs_set_user_presets($presets); }
-      return new WP_REST_Response(['ok'=>true,'presets'=>$presets],200);
+      return new WP_REST_Response(['ok'=>true,'presets'=>gs_get_user_presets()],200);
     }
   ]);
   register_rest_route('gs/v1', '/default', [
@@ -471,15 +641,11 @@ add_action('rest_api_init', function () {
 });
 
 add_action('enqueue_block_editor_assets', function(){
-  $cfg = [
-    'default' => gs_get_default_preset(),
-    'userPresets' => gs_get_user_presets(),
-    'fallbackText' => gs_get_fallback_text(),
-  ];
   // handle name generated by block.json: script handle is 'gs-gradient-shader-editor-script'
   $handle = 'gs-gradient-shader-editor-script';
   wp_register_script($handle, plugins_url('assets/editor.js', __FILE__), ['wp-blocks','wp-element','wp-components','wp-block-editor','wp-i18n'], filemtime(__DIR__.'/assets/editor.js'), true);
-  wp_add_inline_script($handle, 'window.GS_CONFIG = ' . json_encode($cfg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) . ';', 'before');
+  gs_attach_config_inline_script($handle);
+  gs_attach_presets_inline_script($handle);
   wp_enqueue_script($handle);
 
   // ensure the <gradient-shader> custom element is available in the block editor preview
@@ -487,6 +653,8 @@ add_action('enqueue_block_editor_assets', function(){
   if (!wp_script_is($view_handle, 'registered')) {
     wp_register_script($view_handle, plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
   }
+  gs_attach_config_inline_script($view_handle);
+  gs_attach_presets_inline_script($view_handle);
   gs_localize_fallback($view_handle);
   wp_enqueue_script($view_handle);
 });
@@ -494,6 +662,8 @@ add_action('enqueue_block_editor_assets', function(){
 add_action('enqueue_block_assets', function(){
   $handle = 'gs-gradient-shader-view-script';
   if (wp_script_is($handle, 'registered') || wp_script_is($handle, 'enqueued')) {
+    gs_attach_config_inline_script($handle);
+    gs_attach_presets_inline_script($handle);
     gs_localize_fallback($handle);
   }
 });
