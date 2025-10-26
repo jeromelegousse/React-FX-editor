@@ -5,13 +5,44 @@
   const { PanelBody, RangeControl, SelectControl, ColorPicker, TextControl } = components;
   const __ = i18n.__;
 
-  const BUILTIN = {
-    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, yOffset: 0.15, lineThickness: 0.003, softnessBase: 0.0, softnessRange: 0.2, amplitudeFalloff: 0.05, bokehExponent: 3.0, bgAngle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, yOffset: 0.12, lineThickness: 0.003, softnessBase: 0.02, softnessRange: 0.25, amplitudeFalloff: 0.045, bokehExponent: 2.6, bgAngle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, yOffset: 0.20, lineThickness: 0.0025, softnessBase: 0.01, softnessRange: 0.22, amplitudeFalloff: 0.04, bokehExponent: 3.5, bgAngle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, yOffset: 0.10, lineThickness: 0.0032, softnessBase: 0.015, softnessRange: 0.23, amplitudeFalloff: 0.05, bokehExponent: 2.8, bgAngle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, yOffset: 0.15, lineThickness: 0.0028, softnessBase: 0.005, softnessRange: 0.18, amplitudeFalloff: 0.05, bokehExponent: 3.2, bgAngle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
+  const getPresetDefaults = (format = 'camel') => {
+    if (typeof window !== 'undefined' && typeof window.GS_getPresetDefaults === 'function') {
+      const defaults = window.GS_getPresetDefaults(format);
+      if (defaults) return defaults;
+    }
+    if (format === 'camel') {
+      return {
+        speed: 1.0,
+        lineCount: 10,
+        amplitude: 0.15,
+        thickness: 0.003,
+        yOffset: 0.15,
+        lineThickness: 0.003,
+        softnessBase: 0.0,
+        softnessRange: 0.2,
+        amplitudeFalloff: 0.05,
+        bokehExponent: 3.0,
+        bgAngle: 45,
+        col1: '#3a80ff',
+        col2: '#ff66e0',
+        bg1: '#331600',
+        bg2: '#330033'
+      };
+    }
+    return {};
   };
+
+  const BUILTIN = (() => {
+    const camel = window.GS_CONFIG?.camel?.builtinPresets;
+    if (camel && typeof camel === 'object') {
+      return camel;
+    }
+    const snake = window.GS_PRESETS;
+    if (snake && typeof snake === 'object') {
+      return snake;
+    }
+    return {};
+  })();
 
   function ColorField({ label, value, onChange }) {
     return wp.element.createElement('div', { style: { marginBottom: '12px' } },
@@ -53,8 +84,9 @@
       }, []);
 
       const USER = (window.GS_CONFIG && window.GS_CONFIG.userPresets) || {};
+      const builtinNames = Object.keys(BUILTIN || {}).filter((name)=> name !== 'custom');
       const presetOptions = [
-        ...Object.keys(BUILTIN).map(k=>({ label: 'Builtin: '+k, value: k })),
+        ...builtinNames.map(k=>({ label: 'Builtin: '+k, value: k })),
         ...Object.keys(USER).map(k=>({ label: 'Custom: '+k, value: k }))
       ];
 

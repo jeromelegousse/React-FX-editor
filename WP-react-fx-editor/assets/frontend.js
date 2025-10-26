@@ -1,12 +1,30 @@
 (function(){
   const __ = window.wp?.i18n?.__ ?? ((s)=>s);
-  const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, thickness: 0.003, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, bgangle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, thickness: 0.003, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, bgangle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, thickness: 0.0025, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, bgangle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, thickness: 0.0032, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, bgangle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, thickness: 0.0028, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, bgangle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
-    custom:   {}
+
+  const getPresetDefaults = (format = 'snake') => {
+    if (typeof window !== 'undefined' && typeof window.GS_getPresetDefaults === 'function') {
+      return window.GS_getPresetDefaults(format) || {};
+    }
+    if (format === 'camel') {
+      return {};
+    }
+    return {
+      speed: 1.0,
+      linecount: 10,
+      amplitude: 0.15,
+      thickness: 0.003,
+      yoffset: 0.15,
+      linethickness: 0.003,
+      softnessbase: 0.0,
+      softnessrange: 0.2,
+      amplitudefalloff: 0.05,
+      bokehexponent: 3.0,
+      bgangle: 45,
+      col1: '#3a80ff',
+      col2: '#ff66e0',
+      bg1: '#331600',
+      bg2: '#330033'
+    };
   };
 
   const getGlobalConfig = () => {
@@ -15,6 +33,22 @@
     if (typeof GS_CONFIG !== 'undefined') return GS_CONFIG;
     return null;
   };
+
+  const getBuiltinPresets = () => {
+    if (typeof window !== 'undefined' && window.GS_PRESETS && typeof window.GS_PRESETS === 'object') {
+      return window.GS_PRESETS;
+    }
+    const cfg = getGlobalConfig();
+    if (cfg && cfg.builtinPresets && typeof cfg.builtinPresets === 'object') {
+      return cfg.builtinPresets;
+    }
+    return {};
+  };
+
+  const PRESETS = getBuiltinPresets();
+  if (PRESETS && typeof PRESETS === 'object' && !PRESETS.custom) {
+    PRESETS.custom = {};
+  }
 
   const clamp = (v, min, max)=> Math.min(max, Math.max(min, v));
   const hexToRgbf = (hex)=>{
@@ -367,7 +401,11 @@
       const userPresets = (globalCfg && globalCfg.userPresets) ? globalCfg.userPresets : {};
       const userKey = Object.keys(userPresets).find((key) => key.toLowerCase() === presetKey);
       const user = userKey ? userPresets[userKey] : null;
-      const p = user || PRESETS[presetKey] || PRESETS.calm;
+      const defaults = getPresetDefaults('snake');
+      const builtin = (PRESETS && typeof PRESETS === 'object') ? PRESETS : {};
+      const fallback = builtin.calm || defaults;
+      const basePreset = Object.assign({}, defaults, builtin[presetKey] || fallback);
+      const presetValues = user ? Object.assign({}, basePreset, user) : basePreset;
       const getAttr = (name)=>{
         const direct = this.getAttribute(name);
         if (direct != null) return direct;
@@ -393,21 +431,21 @@
       const pickCol = (name, def)=> getAttr(name) || def;
 
       return {
-        speed:     pick('speed', p.speed ?? 1.0),
-        linecount: clamp(pickInt('linecount', p.linecount ?? 10), 1, 32),
-        amplitude: pick('amplitude', p.amplitude ?? 0.15),
-        thickness: pick('thickness', p.thickness ?? 0.003),
-        softnessbase: pick('softnessbase', p.softnessbase ?? 0.2),
-        amplitudefalloff: pick('amplitudefalloff', p.amplitudefalloff ?? 0.05),
-        yoffset:   pick('yoffset', p.yoffset ?? 0.15),
-        linethickness: pick('linethickness', p.linethickness ?? 0.003),
-        softnessrange: pick('softnessrange', p.softnessrange ?? 0.2),
-        bokehexponent: pick('bokehexponent', p.bokehexponent ?? 3.0),
-        bgangle: pick('bgangle', p.bgangle ?? 45),
-        col1:      pickCol('col1', p.col1 || '#3a80ff'),
-        col2:      pickCol('col2', p.col2 || '#ff66e0'),
-        bg1:       pickCol('bg1',  p.bg1  || '#331600'),
-        bg2:       pickCol('bg2',  p.bg2  || '#330033'),
+        speed:     pick('speed', presetValues.speed ?? defaults.speed),
+        linecount: clamp(pickInt('linecount', presetValues.linecount ?? defaults.linecount), 1, 32),
+        amplitude: pick('amplitude', presetValues.amplitude ?? defaults.amplitude),
+        thickness: pick('thickness', presetValues.thickness ?? defaults.thickness),
+        softnessbase: pick('softnessbase', presetValues.softnessbase ?? defaults.softnessbase),
+        amplitudefalloff: pick('amplitudefalloff', presetValues.amplitudefalloff ?? defaults.amplitudefalloff),
+        yoffset:   pick('yoffset', presetValues.yoffset ?? defaults.yoffset),
+        linethickness: pick('linethickness', presetValues.linethickness ?? defaults.linethickness),
+        softnessrange: pick('softnessrange', presetValues.softnessrange ?? defaults.softnessrange),
+        bokehexponent: pick('bokehexponent', presetValues.bokehexponent ?? defaults.bokehexponent),
+        bgangle: pick('bgangle', presetValues.bgangle ?? defaults.bgangle),
+        col1:      pickCol('col1', presetValues.col1 || defaults.col1),
+        col2:      pickCol('col2', presetValues.col2 || defaults.col2),
+        bg1:       pickCol('bg1',  presetValues.bg1  || defaults.bg1),
+        bg2:       pickCol('bg2',  presetValues.bg2  || defaults.bg2),
       };
     }
 
@@ -478,5 +516,4 @@
   if (!customElements.get('gradient-shader')) {
     customElements.define('gradient-shader', GradientShaderEl);
   }
-  window.GS_PRESETS = PRESETS;
 })();

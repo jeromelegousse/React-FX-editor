@@ -8,10 +8,239 @@
 
 if (!defined('ABSPATH')) exit;
 
-function gs_get_user_presets() {
+if (!defined('GS_PRESET_SCHEMA')) {
+  define('GS_PRESET_SCHEMA', [
+    'speed' => [
+      'aliases' => ['speed'],
+      'snake' => 'speed',
+      'camel' => 'speed',
+      'default' => 1.0,
+    ],
+    'linecount' => [
+      'aliases' => ['linecount', 'lineCount'],
+      'snake' => 'linecount',
+      'camel' => 'lineCount',
+      'default' => 10,
+    ],
+    'amplitude' => [
+      'aliases' => ['amplitude'],
+      'snake' => 'amplitude',
+      'camel' => 'amplitude',
+      'default' => 0.15,
+    ],
+    'thickness' => [
+      'aliases' => ['thickness'],
+      'snake' => 'thickness',
+      'camel' => 'thickness',
+      'default' => 0.003,
+    ],
+    'yoffset' => [
+      'aliases' => ['yoffset', 'yOffset'],
+      'snake' => 'yoffset',
+      'camel' => 'yOffset',
+      'default' => 0.15,
+    ],
+    'linethickness' => [
+      'aliases' => ['linethickness', 'lineThickness'],
+      'snake' => 'linethickness',
+      'camel' => 'lineThickness',
+      'default' => 0.003,
+    ],
+    'softnessbase' => [
+      'aliases' => ['softnessbase', 'softnessBase'],
+      'snake' => 'softnessbase',
+      'camel' => 'softnessBase',
+      'default' => 0.0,
+    ],
+    'softnessrange' => [
+      'aliases' => ['softnessrange', 'softnessRange'],
+      'snake' => 'softnessrange',
+      'camel' => 'softnessRange',
+      'default' => 0.2,
+    ],
+    'amplitudefalloff' => [
+      'aliases' => ['amplitudefalloff', 'amplitudeFalloff'],
+      'snake' => 'amplitudefalloff',
+      'camel' => 'amplitudeFalloff',
+      'default' => 0.05,
+    ],
+    'bokehexponent' => [
+      'aliases' => ['bokehexponent', 'bokehExponent'],
+      'snake' => 'bokehexponent',
+      'camel' => 'bokehExponent',
+      'default' => 3.0,
+    ],
+    'bgangle' => [
+      'aliases' => ['bgangle', 'bgAngle'],
+      'snake' => 'bgangle',
+      'camel' => 'bgAngle',
+      'default' => 45,
+    ],
+    'col1' => [
+      'aliases' => ['col1'],
+      'snake' => 'col1',
+      'camel' => 'col1',
+      'default' => '#3a80ff',
+    ],
+    'col2' => [
+      'aliases' => ['col2'],
+      'snake' => 'col2',
+      'camel' => 'col2',
+      'default' => '#ff66e0',
+    ],
+    'bg1' => [
+      'aliases' => ['bg1'],
+      'snake' => 'bg1',
+      'camel' => 'bg1',
+      'default' => '#331600',
+    ],
+    'bg2' => [
+      'aliases' => ['bg2'],
+      'snake' => 'bg2',
+      'camel' => 'bg2',
+      'default' => '#330033',
+    ],
+  ]);
+}
+
+if (!defined('GS_PRESET_LIBRARY')) {
+  define('GS_PRESET_LIBRARY', [
+    'calm' => [
+      'speed' => 1.0,
+      'linecount' => 10,
+      'amplitude' => 0.15,
+      'thickness' => 0.003,
+      'yoffset' => 0.15,
+      'linethickness' => 0.003,
+      'softnessbase' => 0.0,
+      'softnessrange' => 0.2,
+      'amplitudefalloff' => 0.05,
+      'bokehexponent' => 3.0,
+      'bgangle' => 45,
+      'col1' => '#3a80ff',
+      'col2' => '#ff66e0',
+      'bg1' => '#331600',
+      'bg2' => '#330033',
+    ],
+    'vibrant' => [
+      'speed' => 1.6,
+      'linecount' => 14,
+      'amplitude' => 0.22,
+      'thickness' => 0.003,
+      'yoffset' => 0.12,
+      'linethickness' => 0.003,
+      'softnessbase' => 0.02,
+      'softnessrange' => 0.25,
+      'amplitudefalloff' => 0.045,
+      'bokehexponent' => 2.6,
+      'bgangle' => 45,
+      'col1' => '#00ffc2',
+      'col2' => '#ff006e',
+      'bg1' => '#001219',
+      'bg2' => '#3a0ca3',
+    ],
+    'nocturne' => [
+      'speed' => 0.9,
+      'linecount' => 12,
+      'amplitude' => 0.18,
+      'thickness' => 0.0025,
+      'yoffset' => 0.20,
+      'linethickness' => 0.0025,
+      'softnessbase' => 0.01,
+      'softnessrange' => 0.22,
+      'amplitudefalloff' => 0.04,
+      'bokehexponent' => 3.5,
+      'bgangle' => 45,
+      'col1' => '#4cc9f0',
+      'col2' => '#4361ee',
+      'bg1' => '#0b132b',
+      'bg2' => '#1c2541',
+    ],
+    'sunrise' => [
+      'speed' => 1.2,
+      'linecount' => 11,
+      'amplitude' => 0.20,
+      'thickness' => 0.0032,
+      'yoffset' => 0.10,
+      'linethickness' => 0.0032,
+      'softnessbase' => 0.015,
+      'softnessrange' => 0.23,
+      'amplitudefalloff' => 0.05,
+      'bokehexponent' => 2.8,
+      'bgangle' => 45,
+      'col1' => '#ff9e00',
+      'col2' => '#ff4d6d',
+      'bg1' => '#250902',
+      'bg2' => '#3b0d11',
+    ],
+    'mono' => [
+      'speed' => 1.0,
+      'linecount' => 9,
+      'amplitude' => 0.16,
+      'thickness' => 0.0028,
+      'yoffset' => 0.15,
+      'linethickness' => 0.0028,
+      'softnessbase' => 0.005,
+      'softnessrange' => 0.18,
+      'amplitudefalloff' => 0.05,
+      'bokehexponent' => 3.2,
+      'bgangle' => 45,
+      'col1' => '#aaaaaa',
+      'col2' => '#ffffff',
+      'bg1' => '#111111',
+      'bg2' => '#222222',
+    ],
+  ]);
+}
+
+function gs_prepare_preset($data, $format = 'snake', $withDefaults = true) {
+  $schema = GS_PRESET_SCHEMA;
+  $result = [];
+
+  foreach ($schema as $field => $info) {
+    $value = $withDefaults ? ($info['default'] ?? null) : null;
+
+    if (isset($data[$field])) {
+      $value = $data[$field];
+    } else {
+      foreach ($info['aliases'] as $alias) {
+        if (isset($data[$alias])) {
+          $value = $data[$alias];
+          break;
+        }
+      }
+    }
+
+    if ($value === null) {
+      continue;
+    }
+
+    $targetKey = $info[$format] ?? $info['snake'];
+    $result[$targetKey] = $value;
+  }
+
+  return $result;
+}
+
+function gs_get_preset_defaults($format = 'snake') {
+  return gs_prepare_preset([], $format, true);
+}
+
+function gs_format_preset_collection($collection, $format = 'snake') {
+  $formatted = [];
+  foreach ($collection as $name => $preset) {
+    if (!is_array($preset)) {
+      continue;
+    }
+    $formatted[$name] = gs_prepare_preset($preset, $format, true);
+  }
+  return $formatted;
+}
+
+function gs_get_user_presets($format = 'snake') {
   $presets = get_option('gs_presets', []);
   if (!is_array($presets)) $presets = [];
-  return $presets;
+  return gs_format_preset_collection($presets, $format);
 }
 
 function gs_set_user_presets($presets) {
@@ -24,44 +253,8 @@ function gs_get_default_preset() {
   return $def;
 }
 
-function gs_get_builtin_presets() {
-  return [
-    'calm' => [
-      'linecount' => 10,
-      'col1' => '#3a80ff',
-      'col2' => '#ff66e0',
-      'bg1' => '#331600',
-      'bg2' => '#330033',
-    ],
-    'vibrant' => [
-      'linecount' => 14,
-      'col1' => '#00ffc2',
-      'col2' => '#ff006e',
-      'bg1' => '#001219',
-      'bg2' => '#3a0ca3',
-    ],
-    'nocturne' => [
-      'linecount' => 12,
-      'col1' => '#4cc9f0',
-      'col2' => '#4361ee',
-      'bg1' => '#0b132b',
-      'bg2' => '#1c2541',
-    ],
-    'sunrise' => [
-      'linecount' => 11,
-      'col1' => '#ff9e00',
-      'col2' => '#ff4d6d',
-      'bg1' => '#250902',
-      'bg2' => '#3b0d11',
-    ],
-    'mono' => [
-      'linecount' => 9,
-      'col1' => '#aaaaaa',
-      'col2' => '#ffffff',
-      'bg1' => '#111111',
-      'bg2' => '#222222',
-    ],
-  ];
+function gs_get_builtin_presets($format = 'snake') {
+  return gs_format_preset_collection(GS_PRESET_LIBRARY, $format);
 }
 
 function gs_default_fallback_message() {
@@ -106,7 +299,44 @@ function gs_get_config_payload() {
     'userPresets' => gs_get_user_presets(),
     'builtinPresets' => gs_get_builtin_presets(),
     'fallbackText' => gs_get_fallback_text(),
+    'defaults' => gs_get_preset_defaults(),
+    'camel' => [
+      'userPresets' => gs_get_user_presets('camel'),
+      'builtinPresets' => gs_get_builtin_presets('camel'),
+      'defaults' => gs_get_preset_defaults('camel'),
+    ],
   ];
+}
+
+function gs_add_presets_inline_script($handle) {
+  static $processed = [];
+
+  if (isset($processed[$handle])) {
+    return;
+  }
+
+  if (!wp_script_is($handle, 'registered') && !wp_script_is($handle, 'enqueued')) {
+    return;
+  }
+
+  $config = gs_get_config_payload();
+  $script = '(function(root){'
+    . 'var data=' . wp_json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ';'
+    . 'if(!data||typeof data!=="object"){return;}'
+    . 'var presets=data.builtinPresets||{};'
+    . 'var camel=data.camel||{};'
+    . 'var defaultsSnake=data.defaults||{};'
+    . 'var defaultsCamel=camel.defaults||{};'
+    . 'var existingConfig=(root.GS_CONFIG&&typeof root.GS_CONFIG==="object")?root.GS_CONFIG:{};'
+    . 'root.GS_CONFIG=Object.assign({},existingConfig,data);'
+    . 'var existingPresets=(root.GS_PRESETS&&typeof root.GS_PRESETS==="object")?root.GS_PRESETS:{};'
+    . 'root.GS_PRESETS=Object.assign({},existingPresets,presets);'
+    . 'if(!root.GS_PRESETS.custom){root.GS_PRESETS.custom={};}'
+    . 'root.GS_getPresetDefaults=function(format){return format==="camel"?Object.assign({},defaultsCamel):Object.assign({},defaultsSnake);};'
+    . '})(typeof window!=="undefined"?window:(typeof globalThis!=="undefined"?globalThis:this));';
+
+  wp_add_inline_script($handle, $script, 'before');
+  $processed[$handle] = true;
 }
 
 function gs_localize_fallback($handle) {
@@ -403,7 +633,9 @@ add_action('admin_enqueue_scripts', function($hook) {
   if ($hook !== 'toplevel_page_gs-presets') return;
   // enqueue block view script for live preview
   wp_enqueue_script('gs-frontend', plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
+  gs_add_presets_inline_script('gs-frontend');
   wp_enqueue_script('gs-admin', plugins_url('assets/admin.js', __FILE__), ['wp-element','wp-components','wp-api-fetch','wp-i18n'], filemtime(__DIR__.'/assets/admin.js'), true);
+  gs_add_presets_inline_script('gs-admin');
   wp_enqueue_style('gs-admin-css', plugins_url('assets/admin.css', __FILE__), [], filemtime(__DIR__.'/assets/admin.css'));
   wp_localize_script('gs-admin', 'GS_ADMIN', [
     'nonce' => wp_create_nonce('wp_rest'),
@@ -445,7 +677,7 @@ add_action('rest_api_init', function () {
         'bg2' => sanitize_hex_color($data['bg2'] ?? '#330033'),
       ];
       gs_set_user_presets($presets);
-      return new WP_REST_Response(['ok'=>true,'presets'=>$presets],200);
+      return new WP_REST_Response(['ok'=>true,'presets'=>gs_get_user_presets()],200);
     }
   ]);
   register_rest_route('gs/v1', '/presets/(?P<name>[\w\- ]+)', [
@@ -455,7 +687,7 @@ add_action('rest_api_init', function () {
       $name = sanitize_text_field($req['name']);
       $presets = gs_get_user_presets();
       if (isset($presets[$name])) { unset($presets[$name]); gs_set_user_presets($presets); }
-      return new WP_REST_Response(['ok'=>true,'presets'=>$presets],200);
+      return new WP_REST_Response(['ok'=>true,'presets'=>gs_get_user_presets()],200);
     }
   ]);
   register_rest_route('gs/v1', '/default', [
@@ -471,15 +703,10 @@ add_action('rest_api_init', function () {
 });
 
 add_action('enqueue_block_editor_assets', function(){
-  $cfg = [
-    'default' => gs_get_default_preset(),
-    'userPresets' => gs_get_user_presets(),
-    'fallbackText' => gs_get_fallback_text(),
-  ];
   // handle name generated by block.json: script handle is 'gs-gradient-shader-editor-script'
   $handle = 'gs-gradient-shader-editor-script';
   wp_register_script($handle, plugins_url('assets/editor.js', __FILE__), ['wp-blocks','wp-element','wp-components','wp-block-editor','wp-i18n'], filemtime(__DIR__.'/assets/editor.js'), true);
-  wp_add_inline_script($handle, 'window.GS_CONFIG = ' . json_encode($cfg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) . ';', 'before');
+  gs_add_presets_inline_script($handle);
   wp_enqueue_script($handle);
 
   // ensure the <gradient-shader> custom element is available in the block editor preview
@@ -487,6 +714,7 @@ add_action('enqueue_block_editor_assets', function(){
   if (!wp_script_is($view_handle, 'registered')) {
     wp_register_script($view_handle, plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
   }
+  gs_add_presets_inline_script($view_handle);
   gs_localize_fallback($view_handle);
   wp_enqueue_script($view_handle);
 });
@@ -494,6 +722,7 @@ add_action('enqueue_block_editor_assets', function(){
 add_action('enqueue_block_assets', function(){
   $handle = 'gs-gradient-shader-view-script';
   if (wp_script_is($handle, 'registered') || wp_script_is($handle, 'enqueued')) {
+    gs_add_presets_inline_script($handle);
     gs_localize_fallback($handle);
   }
 });
