@@ -5,53 +5,44 @@
   const { PanelBody, RangeControl, SelectControl, ColorPicker, TextControl } = components;
   const __ = i18n.__;
 
-  const getGlobalPresets = () => {
-    if (typeof window !== 'undefined' && window.GS_PRESETS && typeof window.GS_PRESETS === 'object') return window.GS_PRESETS;
-    if (typeof globalThis !== 'undefined' && globalThis.GS_PRESETS && typeof globalThis.GS_PRESETS === 'object') return globalThis.GS_PRESETS;
-    if (typeof GS_PRESETS !== 'undefined') return GS_PRESETS;
+  const getPresetDefaults = (format = 'camel') => {
+    if (typeof window !== 'undefined' && typeof window.GS_getPresetDefaults === 'function') {
+      const defaults = window.GS_getPresetDefaults(format);
+      if (defaults) return defaults;
+    }
+    if (format === 'camel') {
+      return {
+        speed: 1.0,
+        lineCount: 10,
+        amplitude: 0.15,
+        thickness: 0.003,
+        yOffset: 0.15,
+        lineThickness: 0.003,
+        softnessBase: 0.0,
+        softnessRange: 0.2,
+        amplitudeFalloff: 0.05,
+        bokehExponent: 3.0,
+        bgAngle: 45,
+        col1: '#3a80ff',
+        col2: '#ff66e0',
+        bg1: '#331600',
+        bg2: '#330033'
+      };
+    }
     return {};
   };
 
-  const DEFAULT_VALUES = (() => {
-    if (typeof window !== 'undefined' && window.GS_CONFIG && window.GS_CONFIG.defaults && typeof window.GS_CONFIG.defaults === 'object') {
-      return Object.assign({}, window.GS_CONFIG.defaults);
+  const BUILTIN = (() => {
+    const camel = window.GS_CONFIG?.camel?.builtinPresets;
+    if (camel && typeof camel === 'object') {
+      return camel;
     }
-    return {
-      speed: 1.0,
-      linecount: 10,
-      amplitude: 0.15,
-      thickness: 0.003,
-      yoffset: 0.15,
-      linethickness: 0.003,
-      softnessbase: 0.0,
-      softnessrange: 0.2,
-      amplitudefalloff: 0.05,
-      bokehexponent: 3.0,
-      bgangle: 45,
-      col1: '#3a80ff',
-      col2: '#ff66e0',
-      bg1: '#331600',
-      bg2: '#330033'
-    };
+    const snake = window.GS_PRESETS;
+    if (snake && typeof snake === 'object') {
+      return snake;
+    }
+    return {};
   })();
-
-  const mergeWithDefaults = (preset) => Object.assign({}, DEFAULT_VALUES, preset || {});
-
-  const RAW_BUILTIN = getGlobalPresets();
-
-  const BUILTIN = Object.keys(RAW_BUILTIN).reduce((acc, key) => {
-    if (key === 'custom') {
-      return acc;
-    }
-    if (RAW_BUILTIN[key] && typeof RAW_BUILTIN[key] === 'object') {
-      acc[key] = mergeWithDefaults(RAW_BUILTIN[key]);
-    }
-    return acc;
-  }, {});
-
-  if (!Object.keys(BUILTIN).length) {
-    BUILTIN.calm = mergeWithDefaults();
-  }
 
   function ColorField({ label, value, onChange }) {
     return wp.element.createElement('div', { style: { marginBottom: '12px' } },
@@ -93,8 +84,9 @@
       }, []);
 
       const USER = (window.GS_CONFIG && window.GS_CONFIG.userPresets) || {};
+      const builtinNames = Object.keys(BUILTIN || {}).filter((name)=> name !== 'custom');
       const presetOptions = [
-        ...Object.keys(BUILTIN).map(k=>({ label: 'Builtin: '+k, value: k })),
+        ...builtinNames.map(k=>({ label: 'Builtin: '+k, value: k })),
         ...Object.keys(USER).map(k=>({ label: 'Custom: '+k, value: k }))
       ];
 

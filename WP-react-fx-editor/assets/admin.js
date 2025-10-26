@@ -4,44 +4,34 @@
   const __ = i18n.__;
   apiFetch.use( apiFetch.createNonceMiddleware( GS_ADMIN.nonce ) );
 
-  const RAW_BUILTIN = (GS_ADMIN.config && GS_ADMIN.config.builtinPresets) || {};
-  const DEFAULT_VALUES = (() => {
-    if (GS_ADMIN.config && GS_ADMIN.config.defaults && typeof GS_ADMIN.config.defaults === 'object') {
-      return Object.assign({}, GS_ADMIN.config.defaults);
+  const BUILTIN = (GS_ADMIN?.config?.builtinPresets && typeof GS_ADMIN.config.builtinPresets === 'object') ? GS_ADMIN.config.builtinPresets : {};
+
+  const getPresetDefaults = (format = 'snake') => {
+    if (typeof window !== 'undefined' && typeof window.GS_getPresetDefaults === 'function') {
+      const defaults = window.GS_getPresetDefaults(format);
+      if (defaults) return defaults;
     }
-    const firstKey = Object.keys(RAW_BUILTIN)[0];
-    if (firstKey) {
-      return Object.assign({}, RAW_BUILTIN[firstKey]);
+    if (format === 'snake') {
+      return {
+        speed: 1.0,
+        linecount: 10,
+        amplitude: 0.15,
+        thickness: 0.003,
+        yoffset: 0.15,
+        linethickness: 0.003,
+        softnessbase: 0.0,
+        softnessrange: 0.2,
+        amplitudefalloff: 0.05,
+        bokehexponent: 3.0,
+        bgangle: 45,
+        col1: '#3a80ff',
+        col2: '#ff66e0',
+        bg1: '#331600',
+        bg2: '#330033'
+      };
     }
-    return {
-      speed: 1.0,
-      linecount: 10,
-      amplitude: 0.15,
-      thickness: 0.003,
-      yoffset: 0.15,
-      linethickness: 0.003,
-      softnessbase: 0.0,
-      softnessrange: 0.2,
-      amplitudefalloff: 0.05,
-      bokehexponent: 3.0,
-      bgangle: 45,
-      col1: '#3a80ff',
-      col2: '#ff66e0',
-      bg1: '#331600',
-      bg2: '#330033'
-    };
-  })();
-
-  const mergeWithDefaults = (preset) => Object.assign({}, DEFAULT_VALUES, preset || {});
-
-  const BUILTIN = Object.keys(RAW_BUILTIN).reduce((acc, key) => {
-    acc[key] = mergeWithDefaults(RAW_BUILTIN[key]);
-    return acc;
-  }, {});
-
-  if (!Object.keys(BUILTIN).length) {
-    BUILTIN.calm = mergeWithDefaults();
-  }
+    return {};
+  };
 
   function ColorField({ label, value, onChange }) {
     return element.createElement('div', { style: { marginBottom: '12px' } },
@@ -55,13 +45,16 @@
   }
 
   function withDefaults(data){
-    return mergeWithDefaults(data);
+    return Object.assign({}, getPresetDefaults('snake'), data || {});
   }
 
   function App(){
     const [presets, setPresets] = useState(GS_ADMIN.config.userPresets || {});
     const [def, setDef] = useState(GS_ADMIN.config.default || 'calm');
-    const [base, setBase] = useState('calm');
+    const builtinKeys = Object.keys(BUILTIN || {});
+    const builtinOptions = builtinKeys.filter((key)=> key !== 'custom');
+    const initialBase = builtinKeys.includes('calm') ? 'calm' : (builtinOptions[0] || builtinKeys[0] || 'calm');
+    const [base, setBase] = useState(initialBase);
     const defaultName = __('Mon preset', 'gs');
     const [name, setName] = useState(defaultName);
     const [cfg, setCfg] = useState(withDefaults(BUILTIN[base]));
@@ -158,7 +151,7 @@
           label: __('Modèle de base', 'gs'),
           value: base,
           onChange: setBase,
-          options: Object.keys(BUILTIN).map(k=>({label:k, value:k})),
+          options: builtinOptions.map(k=>({label:k, value:k})),
           __next40pxDefaultSize: true,
           __nextHasNoMarginBottom: true
         }),
