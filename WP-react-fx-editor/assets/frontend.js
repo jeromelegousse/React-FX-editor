@@ -1,13 +1,5 @@
 (function(){
   const __ = window.wp?.i18n?.__ ?? ((s)=>s);
-  const PRESETS = {
-    calm:     { speed: 1.0, linecount: 10, amplitude: 0.15, thickness: 0.003, yoffset: 0.15, linethickness: 0.003, softnessbase: 0.0, softnessrange: 0.2, amplitudefalloff: 0.05, bokehexponent: 3.0, bgangle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, linecount: 14, amplitude: 0.22, thickness: 0.003, yoffset: 0.12, linethickness: 0.003, softnessbase: 0.02, softnessrange: 0.25, amplitudefalloff: 0.045, bokehexponent: 2.6, bgangle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, linecount: 12, amplitude: 0.18, thickness: 0.0025, yoffset: 0.20, linethickness: 0.0025, softnessbase: 0.01, softnessrange: 0.22, amplitudefalloff: 0.04, bokehexponent: 3.5, bgangle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, linecount: 11, amplitude: 0.20, thickness: 0.0032, yoffset: 0.10, linethickness: 0.0032, softnessbase: 0.015, softnessrange: 0.23, amplitudefalloff: 0.05, bokehexponent: 2.8, bgangle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, linecount: 9,  amplitude: 0.16, thickness: 0.0028, yoffset: 0.15, linethickness: 0.0028, softnessbase: 0.005, softnessrange: 0.18, amplitudefalloff: 0.05, bokehexponent: 3.2, bgangle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' },
-    custom:   {}
-  };
 
   const getGlobalConfig = () => {
     if (typeof window !== 'undefined' && typeof window.GS_CONFIG !== 'undefined') return window.GS_CONFIG;
@@ -15,6 +7,64 @@
     if (typeof GS_CONFIG !== 'undefined') return GS_CONFIG;
     return null;
   };
+
+  const getInjectedPresets = () => {
+    if (typeof window !== 'undefined' && window.GS_PRESETS && typeof window.GS_PRESETS === 'object') return window.GS_PRESETS;
+    if (typeof globalThis !== 'undefined' && globalThis.GS_PRESETS && typeof globalThis.GS_PRESETS === 'object') return globalThis.GS_PRESETS;
+    if (typeof GS_PRESETS !== 'undefined') return GS_PRESETS;
+    return null;
+  };
+
+  const getDefaultPresetValues = () => {
+    const cfg = getGlobalConfig();
+    if (cfg && cfg.defaults && typeof cfg.defaults === 'object') {
+      return Object.assign({}, cfg.defaults);
+    }
+    return {
+      speed: 1.0,
+      linecount: 10,
+      amplitude: 0.15,
+      thickness: 0.003,
+      yoffset: 0.15,
+      linethickness: 0.003,
+      softnessbase: 0.0,
+      softnessrange: 0.2,
+      amplitudefalloff: 0.05,
+      bokehexponent: 3.0,
+      bgangle: 45,
+      col1: '#3a80ff',
+      col2: '#ff66e0',
+      bg1: '#331600',
+      bg2: '#330033',
+    };
+  };
+
+  const DEFAULT_PRESET_VALUES = getDefaultPresetValues();
+
+  const applyDefaults = (preset) => Object.assign({}, DEFAULT_PRESET_VALUES, preset || {});
+
+  const PRESETS = (() => {
+    const injected = getInjectedPresets();
+    const target = (injected && typeof injected === 'object') ? injected : {};
+    Object.keys(target).forEach((key) => {
+      if (target[key] && typeof target[key] === 'object') {
+        target[key] = applyDefaults(target[key]);
+      }
+    });
+    if (!target.calm) {
+      target.calm = applyDefaults();
+    }
+    if (!target.custom || typeof target.custom !== 'object') {
+      target.custom = {};
+    }
+    return target;
+  })();
+
+  if (typeof window !== 'undefined') {
+    window.GS_PRESETS = PRESETS;
+  } else if (typeof globalThis !== 'undefined') {
+    globalThis.GS_PRESETS = PRESETS;
+  }
 
   const clamp = (v, min, max)=> Math.min(max, Math.max(min, v));
   const hexToRgbf = (hex)=>{
