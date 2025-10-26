@@ -16,7 +16,8 @@
   gap: 12px;
 }
 .gs-preview {
-  height: clamp(280px, 45vh, 360px);
+  min-height: 320px;
+  height: clamp(320px, 45vw, 360px);
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -25,8 +26,6 @@
 .gs-list-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; }
 .gs-actions { display:flex; gap:8px; }
 
-@media (min-width: 960px) {
-  .gs-grid {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
+@media (max-width: 960px) {
+  #gs-admin-app { max-width: none; }
 }
