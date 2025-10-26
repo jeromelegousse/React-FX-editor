@@ -135,13 +135,24 @@
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
       }
-      if (this._resize) window.removeEventListener('resize', this._resize);
+      if (this._boundResize) {
+        window.removeEventListener('resize', this._boundResize);
+        this._boundResize = null;
+      }
       if (this._raf) cancelAnimationFrame(this._raf);
       if (this._mo) this._mo.disconnect();
       if (this._ro) {
         this._ro.disconnect();
         this._ro = null;
       }
+      this._detachContextListeners();
+      if (this._canvas && this.contains(this._canvas)) {
+        this.removeChild(this._canvas);
+      }
+      this._canvas = null;
+      this._gl = null;
+      this._program = null;
+      this._u = null;
     }
 
     _initWebGL(){
@@ -150,9 +161,12 @@
       this._clearFallback(false);
 
       const cfg = this._getConfig();
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
-      canvas.setAttribute('aria-hidden', 'true');
+      const isNewCanvas = !this._canvas;
+      const canvas = this._canvas || document.createElement('canvas');
+      if (isNewCanvas) {
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+        canvas.setAttribute('aria-hidden', 'true');
+      }
       this.style.position = 'relative';
       this.style.display = 'block';
       this.style.width = this.style.width || '100%';
@@ -160,19 +174,39 @@
 
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
+        if (this._canvas) {
+          this._canvas.style.visibility = 'hidden';
+        }
+        if (isNewCanvas) {
+          this._detachContextListeners();
+          if (canvas && this.contains(canvas)) this.removeChild(canvas);
+          this._canvas = null;
+        }
         this._applyFallbackGradient(cfg);
         this._scheduleRetry();
         return;
       }
 
-      this._canvas = canvas;
-      this.appendChild(this._canvas);
+      if (isNewCanvas) {
+        this._canvas = canvas;
+        this.appendChild(this._canvas);
+      }
+      this._attachContextListeners();
+      if (this._canvas) this._canvas.style.removeProperty('visibility');
       this._gl = gl;
 
       this._program = createProgram(this._gl, vs, fs);
       if (!this._program) {
-        this.removeChild(this._canvas);
-        this._canvas = null;
+        if (this._canvas) {
+          this._canvas.style.visibility = 'hidden';
+        }
+        if (isNewCanvas) {
+          this._detachContextListeners();
+          if (this._canvas && this.contains(this._canvas)) {
+            this.removeChild(this._canvas);
+          }
+          this._canvas = null;
+        }
         this._gl = null;
         this._applyFallbackGradient(cfg);
         this._scheduleRetry();
@@ -209,8 +243,10 @@
       };
 
       this._start = performance.now();
-      this._resize = this._resize.bind(this);
-      window.addEventListener('resize', this._resize);
+      if (!this._boundResize) {
+        this._boundResize = this._resize.bind(this);
+      }
+      window.addEventListener('resize', this._boundResize);
       if (typeof ResizeObserver !== 'undefined') {
         if (this._ro) {
           this._ro.disconnect();
@@ -227,6 +263,63 @@
       this._cancelRetry();
       this._initRetries = 0;
       this._clearFallback(true);
+    }
+
+    _handleContextLost(event){
+      event.preventDefault();
+      this._cancelRetry();
+      if (this._raf) {
+        cancelAnimationFrame(this._raf);
+        this._raf = null;
+      }
+      if (this._boundResize) {
+        window.removeEventListener('resize', this._boundResize);
+        this._boundResize = null;
+      }
+      if (this._mo) {
+        this._mo.disconnect();
+        this._mo = null;
+      }
+      if (this._ro) {
+        this._ro.disconnect();
+        this._ro = null;
+      }
+      this._program = null;
+      this._u = null;
+      this._gl = null;
+      if (this._canvas) {
+        this._canvas.style.visibility = 'hidden';
+      }
+      this._applyFallbackGradient(this._getConfig());
+    }
+
+    _handleContextRestored(){
+      this._cancelRetry();
+      this._initWebGL();
+    }
+
+    _attachContextListeners(){
+      if (!this._canvas || this._contextListenersAttached) return;
+      if (!this._onContextLost) {
+        this._onContextLost = this._handleContextLost.bind(this);
+      }
+      if (!this._onContextRestored) {
+        this._onContextRestored = this._handleContextRestored.bind(this);
+      }
+      this._canvas.addEventListener('webglcontextlost', this._onContextLost, false);
+      this._canvas.addEventListener('webglcontextrestored', this._onContextRestored, false);
+      this._contextListenersAttached = true;
+    }
+
+    _detachContextListeners(){
+      if (!this._canvas || !this._contextListenersAttached) return;
+      if (this._onContextLost) {
+        this._canvas.removeEventListener('webglcontextlost', this._onContextLost, false);
+      }
+      if (this._onContextRestored) {
+        this._canvas.removeEventListener('webglcontextrestored', this._onContextRestored, false);
+      }
+      this._contextListenersAttached = false;
     }
 
     _scheduleRetry(){
@@ -412,6 +505,7 @@
     }
 
     _resize(){
+      if (!this._canvas || !this._gl) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = Math.floor(this.clientWidth * dpr);
       const h = Math.floor(this.clientHeight * dpr);
@@ -423,6 +517,7 @@
     }
 
     _updateUniforms(){
+      if (!this._gl || !this._u) return;
       this.style.minHeight = this._resolveMinHeight();
       const cfg = this._getConfig();
       const gl = this._gl;
@@ -448,6 +543,7 @@
     }
 
     _render(now){
+      if (!this._gl || !this._u) return;
       const t = (now - this._start) / 1000.0;
       const gl = this._gl;
       gl.uniform2f(this._u.iResolution, gl.canvas.width, gl.canvas.height);
