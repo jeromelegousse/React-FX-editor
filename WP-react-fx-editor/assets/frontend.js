@@ -506,7 +506,9 @@
       this._fallbackMessage = null;
       this._fallbackActive = false;
 
-      this._restoreFallbackStyles(this);
+      const restoreProps = ['background', 'background-image', 'background-blend-mode', 'position'];
+      this._restoreFallbackStyles(this, restoreProps);
+
       if (this.dataset && this.dataset.gsFallback) {
         delete this.dataset.gsFallback;
       }
@@ -515,21 +517,51 @@
       }
 
       const host = this._getFallbackHost();
+      if (!host) return;
       if (host && host !== this && clearHost) {
         const layer = host.querySelector('[data-gs-fallback-layer]');
         if (layer) host.removeChild(layer);
         const message = host.querySelector('[data-gs-fallback-message]');
         if (message) host.removeChild(message);
-        this._restoreFallbackStyles(host);
-        if (host.dataset && host.dataset.gsFallbackActive) {
-          delete host.dataset.gsFallbackActive;
-        }
-      } else if (host && clearHost) {
-        this._restoreFallbackStyles(host);
+        this._restoreFallbackStyles(host, restoreProps);
         if (host.dataset && host.dataset.gsFallbackActive) {
           delete host.dataset.gsFallbackActive;
         }
       }
+    }
+
+    _styleDatasetKey(prop){
+      const camel = prop.replace(/-([a-z])/g, (_, c)=> c.toUpperCase()).replace(/^[a-z]/, (c)=> c.toUpperCase());
+      return `gsOriginal${camel}`;
+    }
+
+    _rememberFallbackStyle(el, prop){
+      if (!el || !el.style || !el.dataset) return;
+      const key = this._styleDatasetKey(prop);
+      if (Object.prototype.hasOwnProperty.call(el.dataset, key)) return;
+      const current = el.style.getPropertyValue(prop);
+      el.dataset[key] = current ?? '';
+    }
+
+    _restoreFallbackStyles(el, props){
+      if (!el || !el.style || !el.dataset) return;
+      props.forEach((prop)=>{
+        const key = this._styleDatasetKey(prop);
+        if (!Object.prototype.hasOwnProperty.call(el.dataset, key)) return;
+        const original = el.dataset[key];
+        if (original === '') {
+          el.style.removeProperty(prop);
+        } else {
+          el.style.setProperty(prop, original);
+        }
+        delete el.dataset[key];
+      });
+    }
+
+    _setFallbackStyle(el, prop, value){
+      if (!el || !el.style) return;
+      this._rememberFallbackStyle(el, prop);
+      el.style.setProperty(prop, value);
     }
 
     _applyFallbackGradient(cfg){
@@ -541,20 +573,24 @@
 
       const host = this._getFallbackHost();
 
-      const computedPosition = (typeof window !== 'undefined' && window.getComputedStyle)
-        ? window.getComputedStyle(host).position
-        : host.style.position;
-      if (!computedPosition || computedPosition === 'static') {
-        this._setFallbackStyle(host, 'position', 'relative');
+      if (host && typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+        const computedPosition = window.getComputedStyle(host).position;
+        if (computedPosition === 'static') {
+          this._setFallbackStyle(host, 'position', 'relative');
+        }
       }
+
       this._setFallbackStyle(host, 'background', cfg.bg1);
       this._setFallbackStyle(host, 'background-image', `${accentGradient}, ${baseGradient}`);
       this._setFallbackStyle(host, 'background-blend-mode', 'screen');
-      if (host.dataset) {
+
+      if (host?.dataset) {
         host.dataset.gsFallbackActive = 'true';
       }
 
-      this.dataset.gsFallback = 'true';
+      if (this.dataset) {
+        this.dataset.gsFallback = 'true';
+      }
       this._fallbackActive = true;
 
       let layer = host.querySelector('[data-gs-fallback-layer]');
