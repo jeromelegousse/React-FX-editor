@@ -5,13 +5,53 @@
   const { PanelBody, RangeControl, SelectControl, ColorPicker, TextControl } = components;
   const __ = i18n.__;
 
-  const BUILTIN = {
-    calm:     { speed: 1.0, lineCount: 10, amplitude: 0.15, yOffset: 0.15, lineThickness: 0.003, softnessBase: 0.0, softnessRange: 0.2, amplitudeFalloff: 0.05, bokehExponent: 3.0, bgAngle: 45, col1:'#3a80ff', col2:'#ff66e0', bg1:'#331600', bg2:'#330033' },
-    vibrant:  { speed: 1.6, lineCount: 14, amplitude: 0.22, yOffset: 0.12, lineThickness: 0.003, softnessBase: 0.02, softnessRange: 0.25, amplitudeFalloff: 0.045, bokehExponent: 2.6, bgAngle: 45, col1:'#00ffc2', col2:'#ff006e', bg1:'#001219', bg2:'#3a0ca3' },
-    nocturne: { speed: 0.9, lineCount: 12, amplitude: 0.18, yOffset: 0.20, lineThickness: 0.0025, softnessBase: 0.01, softnessRange: 0.22, amplitudeFalloff: 0.04, bokehExponent: 3.5, bgAngle: 45, col1:'#4cc9f0', col2:'#4361ee', bg1:'#0b132b', bg2:'#1c2541' },
-    sunrise:  { speed: 1.2, lineCount: 11, amplitude: 0.20, yOffset: 0.10, lineThickness: 0.0032, softnessBase: 0.015, softnessRange: 0.23, amplitudeFalloff: 0.05, bokehExponent: 2.8, bgAngle: 45, col1:'#ff9e00', col2:'#ff4d6d', bg1:'#250902', bg2:'#3b0d11' },
-    mono:     { speed: 1.0, lineCount: 9,  amplitude: 0.16, yOffset: 0.15, lineThickness: 0.0028, softnessBase: 0.005, softnessRange: 0.18, amplitudeFalloff: 0.05, bokehExponent: 3.2, bgAngle: 45, col1:'#aaaaaa', col2:'#ffffff', bg1:'#111111', bg2:'#222222' }
+  const getGlobalPresets = () => {
+    if (typeof window !== 'undefined' && window.GS_PRESETS && typeof window.GS_PRESETS === 'object') return window.GS_PRESETS;
+    if (typeof globalThis !== 'undefined' && globalThis.GS_PRESETS && typeof globalThis.GS_PRESETS === 'object') return globalThis.GS_PRESETS;
+    if (typeof GS_PRESETS !== 'undefined') return GS_PRESETS;
+    return {};
   };
+
+  const DEFAULT_VALUES = (() => {
+    if (typeof window !== 'undefined' && window.GS_CONFIG && window.GS_CONFIG.defaults && typeof window.GS_CONFIG.defaults === 'object') {
+      return Object.assign({}, window.GS_CONFIG.defaults);
+    }
+    return {
+      speed: 1.0,
+      linecount: 10,
+      amplitude: 0.15,
+      thickness: 0.003,
+      yoffset: 0.15,
+      linethickness: 0.003,
+      softnessbase: 0.0,
+      softnessrange: 0.2,
+      amplitudefalloff: 0.05,
+      bokehexponent: 3.0,
+      bgangle: 45,
+      col1: '#3a80ff',
+      col2: '#ff66e0',
+      bg1: '#331600',
+      bg2: '#330033'
+    };
+  })();
+
+  const mergeWithDefaults = (preset) => Object.assign({}, DEFAULT_VALUES, preset || {});
+
+  const RAW_BUILTIN = getGlobalPresets();
+
+  const BUILTIN = Object.keys(RAW_BUILTIN).reduce((acc, key) => {
+    if (key === 'custom') {
+      return acc;
+    }
+    if (RAW_BUILTIN[key] && typeof RAW_BUILTIN[key] === 'object') {
+      acc[key] = mergeWithDefaults(RAW_BUILTIN[key]);
+    }
+    return acc;
+  }, {});
+
+  if (!Object.keys(BUILTIN).length) {
+    BUILTIN.calm = mergeWithDefaults();
+  }
 
   function ColorField({ label, value, onChange }) {
     return wp.element.createElement('div', { style: { marginBottom: '12px' } },
