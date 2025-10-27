@@ -724,7 +724,7 @@ CSS;
 }
 
 add_action('admin_enqueue_scripts', function($hook) {
-  if ($hook !== 'toplevel_page_gs-presets') return;
+  if ($hook !== 'toplevel_page_gs-presets' && $hook !== 'gs-presets_page_gs-presets') return;
   // enqueue block view script for live preview
   wp_enqueue_script('gs-frontend', plugins_url('assets/frontend.js', __FILE__), ['wp-i18n'], filemtime(__DIR__.'/assets/frontend.js'), true);
   gs_add_presets_inline_script('gs-frontend');
