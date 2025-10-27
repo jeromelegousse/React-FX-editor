@@ -74,6 +74,7 @@
       const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText, minHeight } = attributes;
 
       const computedMinHeight = computeMinHeight(minHeight);
+      const hasCustomMinHeight = minHeight != null && String(minHeight).trim() !== '';
       const blockProps = useBlockProps({ style:{ minHeight: computedMinHeight } });
 
       useEffect(()=>{
@@ -107,7 +108,9 @@
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
       if (fallbackText) attrs['fallback-text'] = fallbackText;
-      attrs['min-height'] = computedMinHeight;
+      if (hasCustomMinHeight) {
+        attrs['min-height'] = computedMinHeight;
+      }
 
       return (
         wp.element.createElement(
@@ -251,7 +254,7 @@
             )
           ),
           wp.element.createElement('div', blockProps,
-            wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
+            wp.element.createElement('gradient-shader', Object.assign({ style: Object.assign({ width: '100%', height: '100%', display: 'block' }, hasCustomMinHeight ? { minHeight: computedMinHeight } : {}) }, attrs))
           )
         )
       );
@@ -259,6 +262,7 @@
     save({ attributes }) {
       const { preset, speed, lineCount, amplitude, thickness, yOffset, lineThickness, softnessBase, softnessRange, amplitudeFalloff, bokehExponent, bgAngle, col1, col2, bg1, bg2, fallbackText, minHeight } = attributes;
       const computedMinHeight = computeMinHeight(minHeight);
+      const hasCustomMinHeight = minHeight != null && String(minHeight).trim() !== '';
       const attrs = { preset: preset || 'calm' };
       if (speed != null) attrs.speed = String(speed);
       if (lineCount != null) attrs.linecount = String(lineCount);
@@ -276,9 +280,11 @@
       if (bg1) attrs.bg1 = bg1;
       if (bg2) attrs.bg2 = bg2;
       if (fallbackText) attrs['fallback-text'] = fallbackText;
-      attrs['min-height'] = computedMinHeight;
+      if (hasCustomMinHeight) {
+        attrs['min-height'] = computedMinHeight;
+      }
       return wp.element.createElement('div', { style: { minHeight: computedMinHeight } },
-        wp.element.createElement('gradient-shader', Object.assign({ style: { width: '100%', height: '100%', display: 'block', minHeight: computedMinHeight } }, attrs))
+        wp.element.createElement('gradient-shader', Object.assign({ style: Object.assign({ width: '100%', height: '100%', display: 'block' }, hasCustomMinHeight ? { minHeight: computedMinHeight } : {}) }, attrs))
       );
     }
   });
