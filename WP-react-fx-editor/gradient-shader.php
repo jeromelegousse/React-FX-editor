@@ -624,10 +624,103 @@ add_action('init', function () {
 // Admin menu and page
 add_action('admin_menu', function() {
   add_menu_page('Gradient Shader','Gradient Shader','edit_pages','gs-presets','gs_render_admin_page','data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+CiAgPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2E4MGZmIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjZmY2NmUwIi8+CiAgPC9saW5lYXJHcmFkaWVudD48L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iIzExMSIvPgogIDxwYXRoIGQ9Ik0wIDEyIEMzIDYsIDcgMTQsIDEwIDEwIFMxNyAxMiwgMjAgOCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+',59);
+  add_submenu_page('gs-presets','Gradient Shader — Créateur de presets','Créateur de presets','edit_pages','gs-presets','gs_render_admin_page');
+  add_submenu_page('gs-presets','Gradient Shader — Tutoriel','Tutoriel','edit_pages','gs-tutorial','gs_render_tutorial_page');
 });
 
 function gs_render_admin_page() {
   echo '<div class="wrap"><h1>Gradient Shader — Créateur de presets</h1><div id="gs-admin-app"></div></div>';
+}
+
+function gs_render_tutorial_page() {
+  $section_css = <<<CSS
+.has-gs-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.has-gs-background gradient-shader {
+  position: absolute !important;
+  inset: 0;
+  z-index: 0;
+}
+
+.has-gs-background > *:not(gradient-shader) {
+  position: relative;
+  z-index: 1;
+}
+
+.has-gs-background [data-gs-fallback-layer],
+.has-gs-background [data-gs-fallback-message] {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+CSS;
+
+  $body_css = <<<CSS
+body {
+  position: relative;
+  min-height: 100vh;
+}
+
+gradient-shader.gs-fullscreen {
+  position: fixed !important;
+  inset: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  z-index: -1;
+  pointer-events: none;
+}
+
+gradient-shader.gs-fullscreen + [data-gs-fallback-layer] {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+gradient-shader.gs-fullscreen + [data-gs-fallback-layer] + [data-gs-fallback-message] {
+  display: none;
+}
+CSS;
+
+  ?>
+  <div class="wrap">
+    <h1>Gradient Shader — Tutoriel d'intégration</h1>
+    <p>Retrouvez ici les instructions pour réutiliser l'animation comme arrière-plan derrière vos blocs ou même sur tout le site.</p>
+
+    <h2>Comportement actuel du bloc</h2>
+    <ul>
+      <li>Le bloc ajoute un élément personnalisé <code>&lt;gradient-shader&gt;</code> accompagné d'une couche de repli (<code>data-gs-fallback-layer</code>) et d'un message d'accessibilité.</li>
+      <li>Le script applique par défaut <code>position: relative</code>, <code>display: block</code>, une largeur de 100&nbsp;% et une hauteur minimale, tandis que le <code>&lt;canvas&gt;</code> interne recouvre tout le conteneur.</li>
+    </ul>
+
+    <h2>Placer le shader derrière un bloc ou une section</h2>
+    <ol>
+      <li>Ajoutez le bloc «&nbsp;Gradient Shader&nbsp;» dans un bloc <em>Group</em> ou <em>Cover</em> qui contiendra votre contenu au premier plan.</li>
+      <li>Appliquez une classe personnalisée (par exemple <code>has-gs-background</code>) sur le bloc parent.</li>
+      <li>Collez le CSS suivant dans votre feuille de style&nbsp;:</li>
+    </ol>
+    <pre><code><?php echo esc_html($section_css); ?></code></pre>
+    <p>Le <code>!important</code> est nécessaire pour écraser la valeur injectée par JavaScript sur l'élément personnalisé. Les sélecteurs supplémentaires conservent aussi la version de repli derrière votre contenu.</p>
+
+    <h2>Utiliser le shader comme arrière-plan du <code>&lt;body&gt;</code></h2>
+    <ol>
+      <li>Placez le bloc ou le shortcode <code>[gradient_shader preset=&quot;calm&quot;]</code> tout en haut de votre page, ou via le hook <code>wp_body_open</code>.</li>
+      <li>Ajoutez-lui une classe (par exemple <code>gs-fullscreen</code>).</li>
+      <li>Ajoutez le CSS ci-dessous pour l'étendre sur tout l'écran&nbsp;:</li>
+    </ol>
+    <pre><code><?php echo esc_html($body_css); ?></code></pre>
+    <p>Le mode plein écran empêche le canvas d'être recréé lors du scroll et permet de conserver le dégradé de repli si WebGL est désactivé.</p>
+
+    <h2>Aller plus loin</h2>
+    <ul>
+      <li>Pour supprimer totalement les styles inline, adaptez le script <code>assets/frontend.js</code> afin de conditionner l'application des styles à une classe spécifique, puis recompilez le bundle.</li>
+      <li>Sur les pages très longues, privilégiez <code>position: fixed</code> sur un conteneur couvrant l'intégralité du viewport.</li>
+    </ul>
+  </div>
+  <?php
 }
 
 add_action('admin_enqueue_scripts', function($hook) {
